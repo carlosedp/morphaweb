@@ -1,0 +1,218 @@
+@import "npm:@fontsource/roboto-mono/400.css";
+@import "npm:@fontsource/roboto-mono/700.css";
+
+:root {
+    --main-bg-color: #333;
+    --main-color: #ffd000;
+    --font: 'Roboto Mono', monospace;
+}
+
+div {
+    display: inline-block;
+}
+
+body {
+    background-color: var(--main-bg-color);
+    color: var(--main-color);
+    font-family: var(--font);
+}
+
+#container {
+    max-width: 60rem;
+    margin: 2rem auto;
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: auto;
+    grid-template-areas:
+        "main main"
+        "controls help"
+        "footer footer";
+    row-gap: 3rem;
+    column-gap: 2rem;
+}
+
+#waveform {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.editor {
+    grid-area: main;
+    border: 1px solid;
+    border-color: var(--main-color)
+}
+
+.controls {
+    grid-area: controls;
+}
+
+.help {
+    grid-area: help;
+}
+
+.footer {
+    grid-area: footer;
+    font-size: 0.7rem;
+    text-align: center;
+}
+
+.linethrough {
+    text-decoration: line-through;
+}
+
+h3 {
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.4rem;
+    background-color: var(--main-color);
+    color: var(--main-bg-color);
+    padding: 0.4rem;
+}
+
+a {
+    color: var(--main-color);
+}
+
+.shortcut {
+    vertical-align: middle;
+    margin: 1rem 0;
+}
+
+.shortcut-icon {
+    background-color: var(--main-color);
+    color: var(--main-bg-color);
+    border-bottom: 2px inset rgba(0, 0, 0, .5);
+    border-left: 2px inset rgba(0, 0, 0, .5);
+    border-right: 2px inset rgba(255, 255, 255, .5);
+    border-top: 2px inset rgba(255, 255, 255, .5);
+    width: 2rem;
+    height: 2rem;
+    box-sizing: border-box;
+    text-align: center;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+button {
+    font-family: 'Roboto Mono';
+    background-color: var(--main-color);
+    color: var(--main-bg-color);
+    border-bottom: 2px inset rgba(0, 0, 0, .5);
+    border-left: 2px inset rgba(0, 0, 0, .5);
+    border-right: 2px inset rgba(255, 255, 255, .5);
+    border-top: 2px inset rgba(255, 255, 255, .5);
+    padding: 1rem;
+    box-sizing: border-box;
+    text-align: center;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.grey {
+    background-color: #999;
+}
+
+.shortcut-icon div {
+    vertical-align: middle;
+}
+
+#overlay {
+    position: fixed;
+    display: none;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(0, 0, 0, 0.8);
+    z-index: 2;
+    top: 0;
+    left: 0;
+}
+
+#overlaytext {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 10rem;
+    font-weight: bolder;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+}
+
+.slice-controls {
+    margin-top: 1rem;
+}
+
+.slice-controls input {
+    background-color: var(--main-color);
+    color: var(--main-bg-color);
+    border: none;
+    padding: 0.5rem;
+    width: 4rem;
+    margin: 0 0.5rem;
+}
+
+.algorithm-controls {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.slider-container {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.slider-container label {
+    min-width: 120px;
+}
+
+.slider-container input[type="range"] {
+    flex: 1;
+}
+
+.slider-value {
+    min-width: 50px;
+    text-align: right;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    height: 5px;
+    background: #ddd;
+    border-radius: 5px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    background: #ffd000;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.wavesurfer-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.wavesurfer-loading::after {
+    content: 'Recalculating...';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 1.2em;
+    color: #666;
+    z-index: 9999;
+}

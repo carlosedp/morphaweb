@@ -1,0 +1,39 @@
+{
+  "name": "morphaweb",
+  "version": "1.0.0",
+  "source": "src/index.html",
+  "license": "MIT",
+  "scripts": {
+    "start": "parcel",
+    "build": "yarn clean && parcel build --public-url ./",
+    "clean": "rm -rf dist/",
+    "deploy": "yarn generateVersion && yarn build && gh-pages -d dist",
+    "generateVersion": "git describe --tags > assets/VERSION.txt"
+  },
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "targets": {
+    "default": {
+      "includeNodeModules": true
+    }
+  },
+  "devDependencies": {
+    "@parcel/transformer-inline-string": "2.8.3",
+    "autoprefixer": "^10.4.2",
+    "events": "^3.3.0",
+    "gh-pages": "^3.2.3",
+    "parcel": "latest",
+    "path-browserify": "^1.0.1",
+    "stream-browserify": "^3.0.0",
+    "string_decoder": "^1.3.0"
+  },
+  "dependencies": {
+    "@fontsource/roboto-mono": "^4.5.8",
+    "crunker": "^1.3.0",
+    "essentia.js": "^0.1.3",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.7.1",
+    "lodash": "^4.17.21",
+    "wavefile": "^11.0.0",
+    "wavesurfer.js": "^6.6.2"
+  }
+}
