@@ -35,8 +35,16 @@ export default class ControlsHandler {
             
             const buffer = [
                 this.morphaweb.wavesurfer.backend.buffer.getChannelData(0),
-                this.morphaweb.wavesurfer.backend.buffer.getChannelData(1)
             ]
+
+            try {
+                buffer.push(this.morphaweb.wavesurfer.backend.buffer.getChannelData(1))
+            } catch(error) {
+                // Duplicate L channel to R channel
+                buffer.push(this.morphaweb.wavesurfer.backend.buffer.getChannelData(0))
+                console.log('No second channel')
+            }
+            
             const markers = this.morphaweb.wavesurfer.markers.markers
             this.morphaweb.wavHandler.createFileFromBuffer(buffer,markers)
         } catch(error) {
