@@ -22,7 +22,12 @@ export default class OnsetHandler {
             }
             
             if (e.data.onsets) {
+                console.log('onsets', e.data.onsets);
                 this.morphaweb.markerHandler.createOnsetMarkers(e.data.onsets);
+            }
+
+            if (e.data.bpm !== null) {
+                this.morphaweb.updateBPM(e.data.bpm);
             }
         };
     }

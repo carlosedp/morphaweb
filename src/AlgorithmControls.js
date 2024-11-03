@@ -15,7 +15,7 @@ export default class AlgorithmControls {
             label: 'Frame Size',
             min: 64,
             max: 8192,
-            value: 1024,
+            value: 2048,
             step: 64
         });
 
@@ -25,18 +25,18 @@ export default class AlgorithmControls {
             label: 'Hop Size %',
             min: 5,
             max: 100,
-            value: 50,
-            step: 5
+            value: 25,
+            step: 1
         });
 
         // Sensitivity Slider
         const sensitivityControl = this.createSlider({
             id: 'sensitivity',
             label: 'Sensitivity %',
-            min: 5,
+            min: 1,
             max: 100,
-            value: 50,
-            step: 5
+            value: 10,
+            step: 1
         });
 
         // ODF Ratio Slider
@@ -45,8 +45,8 @@ export default class AlgorithmControls {
             label: 'HFC/Complex Ratio',
             min: 0,
             max: 100,
-            value: 50,
-            step: 5
+            value: 20,
+            step: 1
         });
 
         controlsContainer.appendChild(frameSizeControl);

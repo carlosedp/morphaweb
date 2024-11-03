@@ -31,6 +31,9 @@ export default class Morphaweb {
         this.initAnalytics()
 
         this.wavesurfer.on('ready',this.onReady.bind(this))
+
+        // Add containers for BPM info
+        this.createInfoDisplay();
     }
 
     onReady = async () => {
@@ -61,5 +64,27 @@ export default class Morphaweb {
         const sampleRate = buffer.sampleRate;
         
         this.onsetHandler.detectOnsets(audioData, sampleRate);
+    }
+
+    createInfoDisplay() {
+        // Create container for BPM info
+        const container = document.createElement('div');
+        container.id = 'audio-info';
+        container.className = 'audio-info';
+        
+        // Create BPM display
+        this.bpmDisplay = document.createElement('div');
+        this.bpmDisplay.id = 'bpm-display';
+        container.appendChild(this.bpmDisplay);
+
+        // Insert after waveform
+        const waveform = document.getElementById('waveform');
+        waveform.parentNode.insertBefore(container, waveform.nextSibling);
+    }
+
+    updateBPM(bpm) {
+        if (this.bpmDisplay) {
+            this.bpmDisplay.textContent = `BPM: ${bpm}`;
+        }
     }
 }
