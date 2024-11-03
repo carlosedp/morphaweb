@@ -18,7 +18,7 @@ export default class Morphaweb {
             container: '#waveform',
             waveColor: '#ffd000',
             progressColor: 'white',
-            plugins: [MarkersPlugin.create(), RegionsPlugin.create()]  
+            plugins: [MarkersPlugin.create(), RegionsPlugin.create()], 
         });
 
         this.dropHandler = new DropHandler(this)

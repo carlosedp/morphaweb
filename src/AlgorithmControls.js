@@ -13,10 +13,10 @@ export default class AlgorithmControls {
         const frameSizeControl = this.createSlider({
             id: 'frame-size',
             label: 'Frame Size',
-            min: 64,
+            min: 512,
             max: 8192,
             value: 2048,
-            step: 64
+            step: 512
         });
 
         // Hop Size Slider (as percentage of frame size)

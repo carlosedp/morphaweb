@@ -21,6 +21,17 @@ self.signal = null;
 self.polarFrames = null;
 self.onsetPositions = null;
 
+// Cache variables
+self.cachedPolarFrames = null;
+self.cachedOdfMatrix = null;
+self.cachedParams = { 
+    frameSize: self.params.frameSize,
+    hopSize: self.params.hopSize,
+    sampleRate: self.params.sampleRate,
+    odfs: [...self.params.odfs],
+    odfsWeights: [...self.params.odfsWeights]
+};
+
 // Initialize essentia
 async function initEssentia() {
     try {
@@ -31,7 +42,26 @@ async function initEssentia() {
     }
 }
 
+function arraysEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
 async function computeFFT() {
+    // Check if cachedPolarFrames exists and parameters match
+    if (
+        self.cachedPolarFrames &&
+        self.cachedParams.frameSize === self.params.frameSize &&
+        self.cachedParams.hopSize === self.params.hopSize &&
+        self.cachedParams.sampleRate === self.params.sampleRate
+    ) {
+        self.polarFrames = self.cachedPolarFrames;
+        return;
+    }
+
     // Skip FFT computation if only using HFC
     if (self.params.odfs.length === 1 && self.params.odfs[0] === 'hfc') {
         const frames = essentia.FrameGenerator(self.signal, self.params.frameSize, self.params.hopSize);
@@ -100,61 +130,80 @@ async function computeFFT() {
     // Sort frames by original index
     self.polarFrames.sort((a, b) => a.index - b.index);
     frames.delete();
+
+    // After computing polarFrames, cache it
+    self.cachedPolarFrames = self.polarFrames;
+    self.cachedParams.frameSize = self.params.frameSize;
+    self.cachedParams.hopSize = self.params.hopSize;
+    self.cachedParams.sampleRate = self.params.sampleRate;
 }
 
 async function computeOnsets() {
-    const alpha = 1 - self.params.sensitivity;
-    const numWorkers = navigator.hardwareConcurrency || 4;
-    const framesPerWorker = Math.ceil(self.polarFrames.length / numWorkers);
-    
-    // Process each ODF type in parallel
-    const odfMatrixPromises = self.params.odfs.map(async (func) => {
-        const workerPromises = [];
+    // Check if odfMatrix is cached and odfs haven't changed
+    if (
+        self.cachedOdfMatrix &&
+        arraysEqual(self.cachedParams.odfs, self.params.odfs)
+    ) {
+        var odfMatrix = self.cachedOdfMatrix;
+    } else {
+        const numWorkers = navigator.hardwareConcurrency || 4;
+        const framesPerWorker = Math.ceil(self.polarFrames.length / numWorkers);
         
-        for (let i = 0; i < numWorkers; i++) {
-            const startFrame = i * framesPerWorker;
-            const endFrame = Math.min((i + 1) * framesPerWorker, self.polarFrames.length);
+        // Process each ODF type in parallel
+        const odfMatrixPromises = self.params.odfs.map(async (func) => {
+            const workerPromises = [];
             
-            workerPromises.push(new Promise((resolve) => {
-                const worker = new Worker(
-                    new URL('./odf-worker.js', import.meta.url),
-                    { type: 'module' }
-                );
+            for (let i = 0; i < numWorkers; i++) {
+                const startFrame = i * framesPerWorker;
+                const endFrame = Math.min((i + 1) * framesPerWorker, self.polarFrames.length);
                 
-                worker.onmessage = (e) => {
-                    if (e.data.error) {
-                        console.error('ODF Worker error:', e.data.error);
-                    }
-                    resolve(e.data.odfValues);
-                    worker.terminate();
-                };
-                
-                worker.postMessage({
-                    frames: self.polarFrames.slice(startFrame, endFrame),
-                    odfFunction: func,
-                    sampleRate: self.params.sampleRate,
-                    startIndex: startFrame
-                });
-            }));
-        }
+                workerPromises.push(new Promise((resolve) => {
+                    const worker = new Worker(
+                        new URL('./odf-worker.js', import.meta.url),
+                        { type: 'module' }
+                    );
+                    
+                    worker.onmessage = (e) => {
+                        if (e.data.error) {
+                            console.error('ODF Worker error:', e.data.error);
+                        }
+                        resolve(e.data.odfValues);
+                        worker.terminate();
+                    };
+                    
+                    worker.postMessage({
+                        frames: self.polarFrames.slice(startFrame, endFrame),
+                        odfFunction: func,
+                        sampleRate: self.params.sampleRate,
+                        startIndex: startFrame
+                    });
+                }));
+            }
+            
+            const results = await Promise.all(workerPromises);
+
+            return results.reduce((acc, curr) => {
+                acc.push(...curr);
+                return acc;
+            }, []);
+        });
         
-        const results = await Promise.all(workerPromises);
+        odfMatrix = await Promise.all(odfMatrixPromises);
 
-        return results.reduce((acc, curr) => {
-            acc.push(...curr);
-            return acc;
-        }, []);
-    });
-    
-    const odfMatrix = await Promise.all(odfMatrixPromises);
-
-    for (let col = 0; col < odfMatrix[0].length; col++) {
-        for (let row = 0; row < odfMatrix.length; row++) {
-            odfMatrix[row][col] = odfMatrix[row][col].value.onsetDetection;
+        for (let col = 0; col < odfMatrix[0].length; col++) {
+            for (let row = 0; row < odfMatrix.length; row++) {
+                odfMatrix[row][col] = odfMatrix[row][col].value.onsetDetection;
+            }
         }
+
+        // After computing odfMatrix, cache it
+        self.cachedOdfMatrix = odfMatrix;
+        self.cachedParams.odfs = [...self.params.odfs];
     }
 
-    
+    const alpha = 1 - self.params.sensitivity;
+
+    // Proceed with onset detection using odfMatrix
     const Onsets = new OnsetsWASM.Onsets(alpha, 5, self.params.sampleRate / self.params.hopSize, 0.02);
     
     const onsetPositions = Onsets.compute(odfMatrix, self.params.odfsWeights).positions;
@@ -164,11 +213,8 @@ async function computeOnsets() {
     if (onsetPositions.size() == 0) {
         return new Float32Array(0);
     } else {
-        // Convert onset positions to array and shift them earlier by 5ms
-        // const shiftSamples = Math.round(0.005 * self.params.sampleRate / self.params.hopSize); // 5ms in frames
         const positions = essentia.vectorToArray(onsetPositions);
         
-        // Add onset at position 0 if there isn't one nearby
         const firstOnset = positions[0];
         const nearZeroThreshold = 2; // Consider onsets within 2 frames as "near zero"
         if (firstOnset > nearZeroThreshold) {
@@ -227,7 +273,32 @@ self.onmessage = async function(e) {
         switch (type) {
             case 'updateParams':
                 if (params) {
+                    const prevParams = { ...self.params };
                     self.params = { ...self.params, ...params };
+
+                    // Determine if FFT or ODF needs to be recomputed
+                    const needRecomputeFFT = 
+                        self.params.frameSize !== prevParams.frameSize ||
+                        self.params.hopSize !== prevParams.hopSize ||
+                        self.params.sampleRate !== prevParams.sampleRate;
+
+                    const needRecomputeODF = 
+                        !arraysEqual(self.params.odfs, prevParams.odfs);
+                    
+                    if (needRecomputeFFT) {
+                        // Invalidate cached FFT and ODF
+                        self.cachedPolarFrames = null;
+                        self.cachedOdfMatrix = null;
+                        self.cachedParams.frameSize = self.params.frameSize;
+                        self.cachedParams.hopSize = self.params.hopSize;
+                        self.cachedParams.sampleRate = self.params.sampleRate;
+                    } else if (needRecomputeODF) {
+                        // Invalidate cached ODF
+                        self.cachedOdfMatrix = null;
+                        self.cachedParams.odfs = [...self.params.odfs];
+                    }
+
+                    // No need to invalidate if only sensitivity or odfsWeights changed
                 }
                 break;
 

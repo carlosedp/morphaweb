@@ -21,7 +21,9 @@ export default class DropHandler {
         let offset = 0
         const fileArray = [...files]
         const promise = fileArray.map(async file => {
+            console.log(file)
             await file.arrayBuffer().then(async buf => {
+                console.log(`Number of channels: ${buf.length}`);
                 const p = await audioCtx.decodeAudioData(buf).then(async buf => {
                     let m = await this.morphaweb.wavHandler.getMarkersFromFile(file)
                     m = m.map((mm,i) => {
