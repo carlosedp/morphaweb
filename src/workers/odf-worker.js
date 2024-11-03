@@ -31,14 +31,26 @@ self.onmessage = async function(e) {
     
     try {
         const odfValues = frames.map((frame, i) => {
-            const result = essentia.OnsetDetection(
-                essentia.arrayToVector(frame.magnitude),
-                essentia.arrayToVector(frame.phase),
-                odfFunction,
-                sampleRate
-            );
+            let result;
+            
+            if (odfFunction === 'hfc') {
+                // HFC only needs magnitude
+                result = essentia.OnsetDetection(
+                    essentia.arrayToVector(frame.magnitude),
+                    essentia.arrayToVector(new Float32Array(frame.magnitude.length)), // Empty phase
+                    odfFunction,
+                    sampleRate
+                );
+            } else {
+                // Complex needs both magnitude and phase
+                result = essentia.OnsetDetection(
+                    essentia.arrayToVector(frame.magnitude),
+                    essentia.arrayToVector(frame.phase),
+                    odfFunction,
+                    sampleRate
+                );
+            }
 
-            // Add index to maintain order when results are combined
             return {
                 value: result,
                 index: startIndex + i
@@ -47,7 +59,7 @@ self.onmessage = async function(e) {
 
         self.postMessage({ 
             odfValues,
-            odfFunction // Include this so we know which ODF these results are for
+            odfFunction
         });
         
     } catch (error) {

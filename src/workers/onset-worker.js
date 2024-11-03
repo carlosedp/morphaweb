@@ -32,8 +32,28 @@ async function initEssentia() {
 }
 
 async function computeFFT() {
+    // Skip FFT computation if only using HFC
+    if (self.params.odfs.length === 1 && self.params.odfs[0] === 'hfc') {
+        const frames = essentia.FrameGenerator(self.signal, self.params.frameSize, self.params.hopSize);
+        const totalFrames = frames.size();
+        
+        // Create dummy polar frames with just the time domain signal
+        self.polarFrames = [];
+        for (let i = 0; i < totalFrames; i++) {
+            self.polarFrames.push({
+                index: i,
+                magnitude: essentia.vectorToArray(frames.get(i)),
+                phase: new Float32Array(self.params.frameSize).fill(0) // Dummy phase data
+            });
+        }
+        
+        frames.delete();
+        return;
+    }
+
     self.polarFrames = [];
     const numWorkers = navigator.hardwareConcurrency || 4;
+    
     const frames = essentia.FrameGenerator(self.signal, self.params.frameSize, self.params.hopSize);
     const totalFrames = frames.size();
     const framesPerWorker = Math.ceil(totalFrames / numWorkers);
@@ -134,21 +154,28 @@ async function computeOnsets() {
         }
     }
 
-    console.log('odfMatrix', odfMatrix)
     
     const Onsets = new OnsetsWASM.Onsets(alpha, 5, self.params.sampleRate / self.params.hopSize, 0.02);
     
     const onsetPositions = Onsets.compute(odfMatrix, self.params.odfsWeights).positions;
-    console.log('onset positions', onsetPositions);
+
     Onsets.shutdown();
     
     if (onsetPositions.size() == 0) {
         return new Float32Array(0);
     } else {
         // Convert onset positions to array and shift them earlier by 5ms
-        const shiftSamples = Math.round(0.005 * self.params.sampleRate / self.params.hopSize); // 5ms in frames
+        // const shiftSamples = Math.round(0.005 * self.params.sampleRate / self.params.hopSize); // 5ms in frames
         const positions = essentia.vectorToArray(onsetPositions);
-        return positions.map(pos => Math.max(0, pos - shiftSamples));
+        
+        // Add onset at position 0 if there isn't one nearby
+        const firstOnset = positions[0];
+        const nearZeroThreshold = 2; // Consider onsets within 2 frames as "near zero"
+        if (firstOnset > nearZeroThreshold) {
+            positions.unshift(0);
+        }
+        
+        return positions.map(pos => Math.max(0, pos));
     }
 }
 
@@ -208,6 +235,7 @@ self.onmessage = async function(e) {
                 if (!(audioData instanceof Float32Array)) {
                     throw new Error('Audio data must be Float32Array');
                 }
+                console.log('Processing audio with params', self.params);
                 self.signal = audioData;
                 self.params.sampleRate = sampleRate;
 
@@ -226,6 +254,7 @@ self.onmessage = async function(e) {
                 throw new Error('Unknown message type');
         }
     } catch (error) {
+        console.error('Onset Worker error:', error);
         self.postMessage({ error: error.message });
     }
 };

@@ -25,7 +25,7 @@ export default class AlgorithmControls {
             label: 'Hop Size %',
             min: 5,
             max: 100,
-            value: 25,
+            value: 50,
             step: 1
         });
 
@@ -35,7 +35,7 @@ export default class AlgorithmControls {
             label: 'Sensitivity %',
             min: 1,
             max: 100,
-            value: 10,
+            value: 50,
             step: 1
         });
 
@@ -45,8 +45,8 @@ export default class AlgorithmControls {
             label: 'HFC/Complex Ratio',
             min: 0,
             max: 100,
-            value: 20,
-            step: 1
+            value: 50,
+            step: 10
         });
 
         controlsContainer.appendChild(frameSizeControl);
@@ -108,12 +108,28 @@ export default class AlgorithmControls {
         const hfcWeight = odfRatio / 100;
         const complexWeight = 1 - hfcWeight;
 
+        let odfs, odfsWeights;
+        
+        if (odfRatio === 0) {
+            // Use only complex
+            odfs = ['complex'];
+            odfsWeights = [1];
+        } else if (odfRatio === 100) {
+            // Use only HFC
+            odfs = ['hfc'];
+            odfsWeights = [1];
+        } else {
+            // Use both with weights
+            odfs = ['hfc', 'complex'];
+            odfsWeights = [hfcWeight, complexWeight];
+        }
+
         const params = {
             frameSize,
             hopSize,
             sensitivity: sensitivity / 100.0,
-            odfs: ['hfc', 'complex'],
-            odfsWeights: [hfcWeight, complexWeight]
+            odfs,
+            odfsWeights
         };
 
         if (this.morphaweb.onsetHandler) {
