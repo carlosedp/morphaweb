@@ -1,5 +1,5 @@
 import Morphaweb from './Morphaweb'
-const version = 'Eric Version'
+const version = 'v1.1'
 
 const morphaweb = new Morphaweb()
 

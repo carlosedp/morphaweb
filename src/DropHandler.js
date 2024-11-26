@@ -3,6 +3,8 @@ export default class DropHandler {
     constructor(morphaweb) {
         this.morphaweb = morphaweb
         this.overlay = document.getElementById("overlay")
+        this.messageOverlay = document.getElementById("message-overlay")
+        this.messageText = document.getElementById("message-text")
         this.crunker = new Crunker({sampleRate:48000})
         
         document.addEventListener("dragover", this.allowDrop.bind(this))
@@ -14,7 +16,18 @@ export default class DropHandler {
         e.preventDefault()
     }
 
+    showMessage(text, duration = 10000) {
+        this.messageText.textContent = text;
+        this.messageOverlay.classList.add('show');
+        
+        setTimeout(() => {
+            this.messageOverlay.classList.remove('show');
+        }, duration);
+    }
+
     async loadFiles(files) {
+        const MAX_DURATION_SECONDS = 174; // 2.9 minutes in seconds
+        
         let audioBuffers = []
         let audioCtx = new AudioContext()
         let markers = []
@@ -25,6 +38,24 @@ export default class DropHandler {
             await file.arrayBuffer().then(async buf => {
                 console.log(`Number of channels: ${buf.length}`);
                 const p = await audioCtx.decodeAudioData(buf).then(async buf => {
+                    if (buf.duration > MAX_DURATION_SECONDS) {
+                        const truncatedBuffer = audioCtx.createBuffer(
+                            buf.numberOfChannels,
+                            Math.floor(MAX_DURATION_SECONDS * buf.sampleRate),
+                            buf.sampleRate
+                        );
+                        
+                        for (let channel = 0; channel < buf.numberOfChannels; channel++) {
+                            truncatedBuffer.copyToChannel(
+                                buf.getChannelData(channel).slice(0, Math.floor(MAX_DURATION_SECONDS * buf.sampleRate)),
+                                channel
+                            );
+                        }
+                        
+                        this.showMessage(`Audio file longer than ${MAX_DURATION_SECONDS/60} minutes. It has been truncated.`);
+                        buf = truncatedBuffer;
+                    }
+
                     let m = await this.morphaweb.wavHandler.getMarkersFromFile(file)
                     m = m.map((mm,i) => {
                         mm.position += offset

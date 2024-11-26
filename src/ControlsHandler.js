@@ -10,24 +10,56 @@ export default class ControlsHandler {
         this.detectOnsetsButton = document.getElementById("detect-onsets")
         this.divideMarkersButton = document.getElementById("divide-markers")
         
-        this.exportButton.addEventListener('click',this.exportWavFile)
-        this.playButton.addEventListener('click',this.play)
-        this.pauseButton.addEventListener('click',this.pause)
+        // Initial state - disable buttons
+        this.setButtonsState(true);
+        
+        // Add listeners
+        this.exportButton.addEventListener('click', this.exportWavFile)
+        this.playButton.addEventListener('click', this.play)
+        this.pauseButton.addEventListener('click', this.pause)
         this.sliceButton.addEventListener('click', this.handleAutoSlice)
         this.detectOnsetsButton.addEventListener('click', this.handleOnsetDetection)
         this.divideMarkersButton.addEventListener('click', this.divideMarkersByTwo)
+        this.sliceCountInput.addEventListener('input', this.validateSliceCount)
 
-        document.addEventListener('keydown',this.onKeydown.bind(this))
-        this.morphaweb.wavesurfer.on('seek',this.onSeek.bind(this))
-        this.morphaweb.wavesurfer.on('finish',this.onFinish.bind(this))
-        window.addEventListener("wheel",throttle(this.onWheel.bind(this),10))
+        document.addEventListener('keydown', this.onKeydown.bind(this))
+        this.morphaweb.wavesurfer.on('seek', this.onSeek.bind(this))
+        this.morphaweb.wavesurfer.on('finish', this.onFinish.bind(this))
+        this.morphaweb.wavesurfer.on('ready', () => this.setButtonsState(false))
+        window.addEventListener("wheel", throttle(this.onWheel.bind(this), 10))
 
-        // Add listener for marker changes
         document.addEventListener('markers-changed', this.updateDivideButton.bind(this));
         
-        // Initial button state
+        // Initial states
         this.updateDivideButton();
+        this.validateSliceCount();
     }
+
+    setButtonsState = (disabled) => {
+        this.playButton.disabled = disabled;
+        this.pauseButton.disabled = disabled;
+        this.exportButton.disabled = disabled;
+        this.sliceButton.disabled = disabled;
+        this.detectOnsetsButton.disabled = disabled;
+        this.sliceCountInput.disabled = disabled;
+        // Don't enable divide button here as it has its own logic
+    }
+
+    validateSliceCount = () => {
+        const value = parseInt(this.sliceCountInput.value);
+        const min = parseInt(this.sliceCountInput.min);
+        
+        if (isNaN(value) || value < min) {
+            this.sliceCountInput.value = min;
+        }
+        
+        // Disable slice button if no valid number or no audio loaded
+        this.sliceButton.disabled = 
+            isNaN(value) || 
+            value < min || 
+            this.morphaweb.wavesurfer.getDuration() === 0;
+    }
+
     exportWavFile = () => {
         try {
             if(this.morphaweb.wavesurfer.getDuration() === 0) { return false; }
