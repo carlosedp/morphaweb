@@ -165,7 +165,13 @@ button {
 }
 
 .slider-container {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.slider-controls {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -175,13 +181,12 @@ button {
     min-width: 120px;
 }
 
-.slider-container input[type="range"] {
-    flex: 1;
-}
-
-.slider-value {
-    min-width: 50px;
-    text-align: right;
+.slider-help-text {
+    font-size: 0.8em;
+    color: #999;
+    margin-left: 120px;
+    font-style: italic;
+    line-height: 1.2;
 }
 
 input[type="range"] {

@@ -42,11 +42,12 @@ export default class AlgorithmControls {
         // ODF Ratio Slider
         const odfRatioControl = this.createSlider({
             id: 'odf-ratio',
-            label: 'HFC/Complex Ratio',
+            label: 'ODF Ratio',
             min: 0,
             max: 100,
             value: 50,
-            step: 10
+            step: 10,
+            helpText: 'Higher values improve detection for percussive elements, lower values improve detection for pitch changes'
         });
 
         controlsContainer.appendChild(frameSizeControl);
@@ -59,9 +60,13 @@ export default class AlgorithmControls {
         existingControls.insertBefore(controlsContainer, existingControls.firstChild);
     }
 
-    createSlider({ id, label, min, max, value, step }) {
+    createSlider({ id, label, min, max, value, step, helpText }) {
         const container = document.createElement('div');
         container.className = 'slider-container';
+
+        // Create a div to wrap the controls
+        const controlsWrapper = document.createElement('div');
+        controlsWrapper.className = 'slider-controls';
 
         const labelElement = document.createElement('label');
         labelElement.htmlFor = id;
@@ -91,9 +96,21 @@ export default class AlgorithmControls {
             this.handleSliderChange();
         });
 
-        container.appendChild(labelElement);
-        container.appendChild(slider);
-        container.appendChild(valueDisplay);
+        // Add elements to the controls wrapper
+        controlsWrapper.appendChild(labelElement);
+        controlsWrapper.appendChild(slider);
+        controlsWrapper.appendChild(valueDisplay);
+        
+        // Add controls wrapper to main container
+        container.appendChild(controlsWrapper);
+
+        // Add help text if provided
+        if (helpText) {
+            const helpElement = document.createElement('div');
+            helpElement.className = 'slider-help-text';
+            helpElement.textContent = helpText;
+            container.appendChild(helpElement);
+        }
 
         return container;
     }

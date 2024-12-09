@@ -6,7 +6,7 @@ the Make Noise Morphagene module.
 ![Example of using Morphaweb](docs/example.gif)
 
 Demo available at:
-[https://knandersen.github.io/morphaweb/](https://knandersen.github.io/morphaweb/)
+[https://ericxgao.github.io/morphaweb-self/](https://ericxgao.github.io/morphaweb-self/)
 
 ## License
 
