@@ -56,4 +56,30 @@ export default class WavHandler {
         console.log('Saving file...')
         saveAs(data, filename)
     }
+
+    async createSampleDrumBuffer(buffer, markers) {
+        console.log('Exporting audio... sample drum')
+        let file = new WaveFile()
+        file.fromScratch(2, this.audioContext.sampleRate, '16', buffer)
+
+        // // Add markers as cue points
+        // for (let marker of markers) {
+        //     if (marker.position != "top") {
+        //         file.setCuePoint({
+        //             position: marker.time * 1000
+        //         })
+        //     }
+        // }
+
+        // for (let i = 0; i < file.cue.points.length; i++) {
+        //     file.cue.points[i].dwPosition = file.cue.points[i].dwSampleOffset
+        // }
+
+        const data = file.toDataURI()
+        
+        // Determine file extension based on original format
+        const filename = "export.wav"
+        console.log('Saving file...')
+        saveAs(data, filename)
+    }
 }

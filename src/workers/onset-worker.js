@@ -213,7 +213,7 @@ async function computeOnsets() {
     if (onsetPositions.size() == 0) {
         return new Float32Array(0);
     } else {
-        const positions = essentia.vectorToArray(onsetPositions);
+        const positions = essentia.vectorToArray(onsetPositions).map(pos => Math.max(0, pos));
         
         const firstOnset = positions[0];
         const nearZeroThreshold = 2; // Consider onsets within 2 frames as "near zero"

@@ -9,6 +9,7 @@ export default class ControlsHandler {
         this.sliceCountInput = document.getElementById("slice-count")
         this.detectOnsetsButton = document.getElementById("detect-onsets")
         this.divideMarkersButton = document.getElementById("divide-markers")
+        this.exportSampleDrumButton = document.getElementById("export-sampledrum")
         
         // Initial state - disable buttons
         this.setButtonsState(true);
@@ -21,6 +22,7 @@ export default class ControlsHandler {
         this.detectOnsetsButton.addEventListener('click', this.handleOnsetDetection)
         this.divideMarkersButton.addEventListener('click', this.divideMarkersByTwo)
         this.sliceCountInput.addEventListener('input', this.validateSliceCount)
+        this.exportSampleDrumButton.addEventListener('click', this.exportSampleDrumFile)
 
         document.addEventListener('keydown', this.onKeydown.bind(this))
         this.morphaweb.wavesurfer.on('seek', this.onSeek.bind(this))
@@ -171,6 +173,30 @@ export default class ControlsHandler {
             this.morphaweb.track("DivideMarkersByTwo");
         } catch (error) {
             this.morphaweb.track("ErrorDivideMarkersByTwo");
+        }
+    }
+
+    exportSampleDrumFile = () => {
+        try {
+            if(this.morphaweb.wavesurfer.getDuration() === 0) { return false; }
+            
+            const buffer = [
+                this.morphaweb.wavesurfer.backend.buffer.getChannelData(0),
+            ]
+
+            try {
+                buffer.push(this.morphaweb.wavesurfer.backend.buffer.getChannelData(1))
+            } catch(error) {
+                // Duplicate L channel to R channel
+                buffer.push(this.morphaweb.wavesurfer.backend.buffer.getChannelData(0))
+                console.log('No second channel')
+            }
+            
+            const markers = this.morphaweb.wavesurfer.markers.markers
+            this.morphaweb.wavHandler.createSampleDrumBuffer(buffer, markers)
+        } catch(error) {
+            console.log(error)
+            this.morphaweb.track("ErrorExportSampleDrumFile")
         }
     }
 }
