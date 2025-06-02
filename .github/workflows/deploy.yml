@@ -26,7 +26,10 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm installeVersion
+        run: npm install
+
+      - name: Install Yarn
+        run: npm install -g yarn
 
       - name: Build
         run: npm run build
