@@ -5,8 +5,10 @@ the Make Noise Morphagene module.
 
 ![Example of using Morphaweb](docs/example.gif)
 
+This version adds on top of the original Morphaweb project by Eric Gao the ability to crop and add fade-ins and fade-outs to the audio files.
+
 Demo available at:
-[https://ericxgao.github.io/morphaweb-self/](https://ericxgao.github.io/morphaweb-self/)
+[https://carlosedp.github.io/morphaweb/](https://carlosedp.github.io/morphaweb/)
 
 ## License
 
@@ -44,4 +46,3 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# morphaweb-self
