@@ -26,6 +26,7 @@
                 <section>
                     <button id="play">play</button>
                     <button id="pause">pause</button>
+                    <hr />
                     <button id="export" class="button">
                         <div class="text-2xl">export reel</div>
                         <div class="text-xs">(stereo, 32-bit, 48KHz)</div>
@@ -34,10 +35,36 @@
                         <div class="text-2xl">export for Sample Drum</div>
                         <div class="text-xs">(mono, 16-bit, 48KHz)</div>
                     </button>
+                    <hr />
                     <button id="detect-onsets">detect onsets</button>
                     <button id="divide-markers">DIVIDE MARKERS BY 2</button>
+                    <hr />
+                    <button id="create-crop-region" class="button">
+                        <div class="text-lg" title="Click to create a selection region for cropping audio">create crop
+                            region</div>
+                    </button>
+                    <button id="crop-audio" class="button" disabled>
+                        <div class="text-lg title=" Trim audio to selected region">crop to selection</div>
+                    </button>
+                    <button id="clear-crop-region" class="button" disabled>
+                        <div class="text-xs">clear crop region</div>
+                    </button>
+                    <hr />
+                    <button id="create-fade-in-region" class="button">
+                        <div class="text-lg">create fade-in</div>
+                    </button>
+                    <button id="create-fade-out-region" class="button">
+                        <div class="text-lg">create fade-out</div>
+                    </button>
+                    <button id="apply-fades" class="button" disabled>
+                        <div class="text-lg" title="Process fade effects">apply fades</div>
+                    </button>
+                    <button id="clear-fade-regions" class="button" disabled>
+                        <div class="text-xs">clear fade regions</div>
+                    </button>
                 </section>
             </section>
+            <hr />
             <section class="slice-controls">
                 <label for="slice-count">Number of slices:</label>
                 <input type="number" id="slice-count" min="2" value="8">
@@ -54,6 +81,7 @@
                 <p>3. test your markers by pressing keyboard buttons 0-9 and qwertyuiop</p>
                 <p>4. if the slices are too small, you can divide them by clicking the "divide markers by 2" button</p>
                 <p>5. export the wav-file to use with morphagene</p>
+                <p> Use the mouse scroll wheel to zoom in and out in the waveform.</p>
             </section>
             <section class="align-middle col-span-8">
                 <h3>SHORTCUTS</h3>
@@ -75,11 +103,49 @@
                     </div>
                     <div>play/pause</div>
                 </section>
+                <section class="shortcut">
+                    <div class="shortcut-icon">
+                        <div>c</div>
+                    </div>
+                    <div>create crop region</div>
+                </section>
+                <section class="shortcut">
+                    <div class="shortcut-icon">
+                        <div>x</div>
+                    </div>
+                    <div>crop to selection</div>
+                </section>
+                <section class="shortcut">
+                    <div class="shortcut-icon">
+                        <div>esc</div>
+                    </div>
+                    <div>clear crop region</div>
+                </section>
+                <section class="shortcut">
+                    <div class="shortcut-icon">
+                        <div>f</div>
+                    </div>
+                    <div>create fade-in region</div>
+                </section>
+                <section class="shortcut">
+                    <div class="shortcut-icon">
+                        <div>g</div>
+                    </div>
+                    <div>create fade-out region</div>
+                </section>
+                <section class="shortcut">
+                    <div class="shortcut-icon">
+                        <div>a</div>
+                    </div>
+                    <div>apply fades</div>
+                </section>
             </section>
         </section>
-        <section class="footer">this is a special modified version of an <a href="https://github.com/knandersen/morphaweb" target="_blank">open source
+        <section class="footer">this is a special modified version of an <a
+                href="https://github.com/knandersen/morphaweb" target="_blank">open source
                 project</a>
-            by kevin nørby andersen. all data is processed client-side, which means it stays with you and only you. eric added the auto slicing and onset detection, which can be found in 
+            by kevin nørby andersen. all data is processed client-side, which means it stays with you and only you. eric
+            added the auto slicing and onset detection, which can be found in
             <a href="https://github.com/Ericxgao/morphaweb-self/" target="_blank">this fork</a>
             <br />
             <strong>version <span id="version"></span></strong>

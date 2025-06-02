@@ -50,7 +50,7 @@ export default class WavHandler {
         }
 
         const data = file.toDataURI()
-        
+
         // Determine file extension based on original format
         const filename = "export.wav"
         console.log('Saving file...')
@@ -76,10 +76,33 @@ export default class WavHandler {
         // }
 
         const data = file.toDataURI()
-        
+
         // Determine file extension based on original format
         const filename = "export.wav"
         console.log('Saving file...')
+        saveAs(data, filename)
+    }
+
+    async createCroppedBuffer(buffer, markers, filename = "cropped.wav") {
+        console.log('Exporting cropped audio...')
+        let file = new WaveFile()
+        file.fromScratch(2, this.audioContext.sampleRate, '32f', buffer)
+
+        // Add markers as cue points (they should already be adjusted for the crop)
+        for (let marker of markers) {
+            if (marker.position != "top") {
+                file.setCuePoint({
+                    position: marker.time * 1000
+                })
+            }
+        }
+
+        for (let i = 0; i < file.cue.points.length; i++) {
+            file.cue.points[i].dwPosition = file.cue.points[i].dwSampleOffset
+        }
+
+        const data = file.toDataURI()
+        console.log('Saving cropped file...')
         saveAs(data, filename)
     }
 }
