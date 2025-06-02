@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@fontsource/roboto-mono@^4.5.8":
-  version "4.5.10"
-  resolved "https://registry.npmjs.org/@fontsource/roboto-mono/-/roboto-mono-4.5.10.tgz"
-  integrity sha512-KrJdmkqz6DszT2wV/bbhXef4r0hV3B0vw2mAqei8A2kRnvq+gcJLmmIeQ94vu9VEXrUQzos5M9lH1TAAXpRphw==
+"@fontsource/roboto-mono@^5.2.6":
+  version "5.2.6"
+  resolved "https://registry.yarnpkg.com/@fontsource/roboto-mono/-/roboto-mono-5.2.6.tgz#d87717798833d175fcd8f6b99f0f1c7f2a4a7939"
+  integrity sha512-fLCa3zs9XruKE8Fdbq0UWB0wqTi5dzi09QsnW7HgTwwnSVDZ3nH+X7Qg7l0yeIZs+E472cKE3RUD21ZnaXk4Zg==
 
 "@lezer/common@^1.0.0":
   version "1.2.3"
