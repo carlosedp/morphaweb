@@ -1,174 +1,204 @@
 export default class MarkerHandler {
-    constructor(morphaweb){
-        this.color = '#ff990a'
-        this.colorHighlight = "#ff1111"
-        this.colorTopMarker = "#ff00bb"
-        this.markers = morphaweb.wavesurfer.markers;
+  constructor(morphaweb) {
+    this.color = "#ff990a";
+    this.colorHighlight = "#ff1111";
+    this.colorTopMarker = "#ff00bb";
+    this.markers = morphaweb.wavesurfer.markers;
 
-        this.morphaweb = morphaweb
-        this.morphaweb.wavesurfer.on('marker-click',this.onClick.bind(this))
-        this.morphaweb.wavesurfer.on('marker-drag', this.onMarkersChanged.bind(this));
-        this.morphaweb.wavesurfer.on('marker-remove', this.onMarkersChanged.bind(this));
-        this.morphaweb.wavesurfer.on('marker-update', this.onMarkersChanged.bind(this));
+    this.morphaweb = morphaweb;
+    this.morphaweb.wavesurfer.on("marker-click", this.onClick.bind(this));
+    this.morphaweb.wavesurfer.on(
+      "marker-drag",
+      this.onMarkersChanged.bind(this),
+    );
+    this.morphaweb.wavesurfer.on(
+      "marker-remove",
+      this.onMarkersChanged.bind(this),
+    );
+    this.morphaweb.wavesurfer.on(
+      "marker-update",
+      this.onMarkersChanged.bind(this),
+    );
+  }
+
+  addMarkers = (markers) => {
+    for (let marker of markers) {
+      this.createMarker(marker.position / 1000);
     }
+  };
+  removeTopMarker() {
+    const i = this.markers.markers.map((m) => m.position).indexOf("top");
+    this.morphaweb.wavesurfer.markers.remove(i);
+  }
 
-    addMarkers = (markers) => {
-        for (let marker of markers) {
-            this.createMarker(marker.position / 1000)
+  removeSelectedMarker() {
+    const i = this.getSelectedMarkerIndex();
+    this.markers.remove(i);
+    this.onMarkersChanged();
+  }
+
+  highlightMarker(time) {
+    this.markers.markers.map((m) => {
+      if (m.position == "bottom") {
+        if (m.time == time) {
+          m.el.children[1].children[0].children[0].setAttribute(
+            "fill",
+            this.colorHighlight,
+          );
+        } else {
+          m.el.children[1].children[0].children[0].setAttribute(
+            "fill",
+            this.color,
+          );
         }
-    }
-    removeTopMarker() {
-        const i = this.markers.markers.map(m => m.position).indexOf('top')
-        this.morphaweb.wavesurfer.markers.remove(i)
-    }
+      }
+    });
+  }
 
-    removeSelectedMarker() {
-        const i = this.getSelectedMarkerIndex()
-        this.markers.remove(i)
-        this.onMarkersChanged();
-    }
+  getBottomMarkers() {
+    return this.markers.markers.filter((m) => m.position === "bottom");
+  }
 
-    highlightMarker(time) {
-        this.markers.markers.map(m => {
-            if(m.position=="bottom"){
-                if(m.time == time) {
-                    m.el.children[1].children[0].children[0].setAttribute('fill', this.colorHighlight)
-                } else {
-                    m.el.children[1].children[0].children[0].setAttribute('fill', this.color)
-                }       
-            }
-        })
-    }
+  getTopMarkers() {
+    return this.markers.markers.filter((m) => m.position === "top");
+  }
 
-    getBottomMarkers() {
-        return this.markers.markers.filter(m => m.position === "bottom")
-    }
+  getSelectedMarker() {
+    const selectedMarker = this.markers.markers.filter(
+      (m) =>
+        m.el.children[1].children[0].children[0].getAttribute("fill") ===
+        this.colorHighlight,
+    )[0];
+    return selectedMarker;
+  }
+  getSelectedMarkerIndex() {
+    const selectedMarker = this.getSelectedMarker();
+    return this.markers.markers.findIndex((m) => m === selectedMarker);
+  }
 
-    getTopMarkers() {
-        return this.markers.markers.filter(m => m.position === "top")
-    }
+  getMarkerAtTime(time) {
+    const bottomMarkers = this.getBottomMarkers();
+    return bottomMarkers.indexOf(time);
+  }
 
-    getSelectedMarker() {
-        const selectedMarker = this.markers.markers.filter(m => m.el.children[1].children[0].children[0].getAttribute('fill') === this.colorHighlight)[0]
-        return selectedMarker;
-    }
-    getSelectedMarkerIndex() {
-        const selectedMarker = this.getSelectedMarker()
-        return this.markers.markers.findIndex(m => m === selectedMarker)
+  createMarker(time, type = "bottom") {
+    if (type == "bottom" && this.getMarkerAtTime(time) != -1) {
+      return false;
     }
 
-    getMarkerAtTime(time) {
-        const bottomMarkers = this.getBottomMarkers()
-        return bottomMarkers.indexOf(time)
-    }
-    
-    createMarker(time, type="bottom") {
-        if (type == "bottom" && this.getMarkerAtTime(time) != -1) {return false}
+    // Get audio data and find nearest zero crossing
+    const audioData =
+      this.morphaweb.wavesurfer.backend.buffer.getChannelData(0);
+    const sampleRate = this.morphaweb.wavesurfer.backend.buffer.sampleRate;
+    const sampleIndex = Math.round(time * sampleRate);
 
-        // Get audio data and find nearest zero crossing
-        const audioData = this.morphaweb.wavesurfer.backend.buffer.getChannelData(0);
-        const sampleRate = this.morphaweb.wavesurfer.backend.buffer.sampleRate;
-        const sampleIndex = Math.round(time * sampleRate);
-        
-        // Only snap to zero crossings for bottom markers (user-created)
-        let snappedTime = time;
-        if (type === "bottom" && this.morphaweb.onsetHandler) {
-            const snappedSample = this.morphaweb.onsetHandler.findNearestZeroCrossing(audioData, sampleIndex);
-            snappedTime = snappedSample / sampleRate;
-        }
-
-        let o = {
-            time: snappedTime,
-            position: "bottom",
-            color: this.color,
-            draggable: true
-        }
-        if(type == "top") {
-            o.position = "top";
-            o.color = this.colorTopMarker;
-        }
-        this.morphaweb.wavesurfer.addMarker(o);
-        this.onMarkersChanged();
-    }
-    
-    createMarkerAtCurrentPosition() {
-        this.createMarker(this.morphaweb.playOffset * this.morphaweb.wavesurfer.getDuration(),"bottom")
+    // Only snap to zero crossings for bottom markers (user-created)
+    let snappedTime = time;
+    if (type === "bottom" && this.morphaweb.onsetHandler) {
+      const snappedSample = this.morphaweb.onsetHandler.findNearestZeroCrossing(
+        audioData,
+        sampleIndex,
+      );
+      snappedTime = snappedSample / sampleRate;
     }
 
-    onClick(e) {
-        this.highlightMarker(e.time)
-    }   
+    let o = {
+      time: snappedTime,
+      position: "bottom",
+      color: this.color,
+      draggable: true,
+    };
+    if (type == "top") {
+      o.position = "top";
+      o.color = this.colorTopMarker;
+    }
+    this.morphaweb.wavesurfer.addMarker(o);
+    this.onMarkersChanged();
+  }
 
-    createAutoSlices(numberOfSlices) {
-        const duration = this.morphaweb.wavesurfer.getDuration();
-        const interval = duration / numberOfSlices;
+  createMarkerAtCurrentPosition() {
+    this.createMarker(
+      this.morphaweb.playOffset * this.morphaweb.wavesurfer.getDuration(),
+      "bottom",
+    );
+  }
 
-        // Create marker at the beginning (time = 0)
-        this.createMarker(0, "bottom");
+  onClick(e) {
+    this.highlightMarker(e.time);
+  }
 
-        // Create markers at regular intervals
-        for (let i = 1; i < numberOfSlices; i++) {
-            this.createMarker(interval * i, "bottom");
-        }
+  createAutoSlices(numberOfSlices) {
+    const duration = this.morphaweb.wavesurfer.getDuration();
+    const interval = duration / numberOfSlices;
+
+    // Create marker at the beginning (time = 0)
+    this.createMarker(0, "bottom");
+
+    // Create markers at regular intervals
+    for (let i = 1; i < numberOfSlices; i++) {
+      this.createMarker(interval * i, "bottom");
+    }
+  }
+
+  clearAllMarkers() {
+    this.morphaweb.wavesurfer.clearMarkers();
+    this.onMarkersChanged();
+  }
+
+  // Add method to get all markers in time order
+  getMarkers() {
+    return this.markers.markers.sort((a, b) => a.time - b.time);
+  }
+
+  // Add method to convert onset times to markers
+  createOnsetMarkers(onsets) {
+    this.clearAllMarkers();
+    onsets.forEach((onset) => {
+      this.createMarker(onset, "bottom");
+    });
+  }
+
+  // Add method to convert markers to onset times
+  getOnsetTimes() {
+    return this.getTopMarkers()
+      .map((marker) => marker.time)
+      .sort((a, b) => a - b);
+  }
+
+  // Add method to update marker positions
+  updateMarkerPosition(index, newTime) {
+    const marker = this.markers.markers[index];
+    if (marker) {
+      marker.time = newTime;
+      this.morphaweb.wavesurfer.updateMarkerPosition(index, newTime);
+    }
+  }
+
+  onMarkersChanged() {
+    // Dispatch custom event when markers change
+    const event = new CustomEvent("markers-changed", {
+      detail: { markerCount: this.getBottomMarkers().length },
+    });
+    document.dispatchEvent(event);
+  }
+
+  hasEnoughMarkers() {
+    return this.getBottomMarkers().length >= 2;
+  }
+
+  divideMarkersByTwo() {
+    if (!this.hasEnoughMarkers()) {
+      return;
     }
 
-    clearAllMarkers() {
-        this.morphaweb.wavesurfer.clearMarkers();
-        this.onMarkersChanged();
-    }
+    const currentMarkers = this.getBottomMarkers().sort(
+      (a, b) => a.time - b.time,
+    );
+    const newMarkers = currentMarkers.filter((_, index) => index % 2 === 0);
 
-    // Add method to get all markers in time order
-    getMarkers() {
-        return this.markers.markers.sort((a, b) => a.time - b.time);
-    }
-
-    // Add method to convert onset times to markers
-    createOnsetMarkers(onsets) {
-        this.clearAllMarkers();
-        onsets.forEach(onset => {
-            this.createMarker(onset, "bottom");
-        });
-    }
-
-    // Add method to convert markers to onset times
-    getOnsetTimes() {
-        return this.getTopMarkers()
-            .map(marker => marker.time)
-            .sort((a, b) => a - b);
-    }
-
-    // Add method to update marker positions
-    updateMarkerPosition(index, newTime) {
-        const marker = this.markers.markers[index];
-        if (marker) {
-            marker.time = newTime;
-            this.morphaweb.wavesurfer.updateMarkerPosition(index, newTime);
-        }
-    }
-
-    onMarkersChanged() {
-        // Dispatch custom event when markers change
-        const event = new CustomEvent('markers-changed', {
-            detail: { markerCount: this.getBottomMarkers().length }
-        });
-        document.dispatchEvent(event);
-    }
-
-    hasEnoughMarkers() {
-        return this.getBottomMarkers().length >= 2;
-    }
-
-    divideMarkersByTwo() {
-        if (!this.hasEnoughMarkers()) {
-            return;
-        }
-        
-        const currentMarkers = this.getBottomMarkers().sort((a, b) => a.time - b.time);
-        const newMarkers = currentMarkers.filter((_, index) => index % 2 === 0);
-        
-        this.clearAllMarkers();
-        newMarkers.forEach(marker => {
-            this.createMarker(marker.time, "bottom");
-        });
-    }
+    this.clearAllMarkers();
+    newMarkers.forEach((marker) => {
+      this.createMarker(marker.time, "bottom");
+    });
+  }
 }

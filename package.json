@@ -8,7 +8,8 @@
     "build": "yarn clean && parcel build --public-url ./",
     "clean": "rm -rf dist/",
     "deploy": "yarn build && gh-pages -d dist",
-    "generateVersion": "git describe --tags > assets/VERSION.txt"
+    "generateVersion": "git describe --tags > assets/VERSION.txt",
+    "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "targets": {
@@ -25,6 +26,7 @@
     "gh-pages": "^6.3.0",
     "parcel": "^2.15.2",
     "path-browserify": "^1.0.1",
+    "prettier": "^3.5.3",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
     "string_decoder": "^1.3.0",

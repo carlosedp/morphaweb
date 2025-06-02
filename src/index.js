@@ -1,7 +1,7 @@
-import Morphaweb from './Morphaweb'
-const version = 'v1.1'
+import Morphaweb from "./Morphaweb";
+const version = "v1.1";
 
-const morphaweb = new Morphaweb()
+const morphaweb = new Morphaweb();
 
-const versionElement = document.getElementById('version')
-versionElement.textContent = version
+const versionElement = document.getElementById("version");
+versionElement.textContent = version;
