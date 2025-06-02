@@ -9,7 +9,6 @@ export default class ControlsHandler {
         this.sliceCountInput = document.getElementById("slice-count")
         this.detectOnsetsButton = document.getElementById("detect-onsets")
         this.divideMarkersButton = document.getElementById("divide-markers")
-        this.exportSampleDrumButton = document.getElementById("export-sampledrum")
         this.createCropRegionButton = document.getElementById("create-crop-region")
         this.cropAudioButton = document.getElementById("crop-audio")
         this.clearCropRegionButton = document.getElementById("clear-crop-region")
@@ -35,7 +34,6 @@ export default class ControlsHandler {
         this.detectOnsetsButton.addEventListener('click', this.handleOnsetDetection)
         this.divideMarkersButton.addEventListener('click', this.divideMarkersByTwo)
         this.sliceCountInput.addEventListener('input', this.validateSliceCount)
-        this.exportSampleDrumButton.addEventListener('click', this.exportSampleDrumFile)
         this.createCropRegionButton.addEventListener('click', this.createCropRegion)
         this.cropAudioButton.addEventListener('click', this.cropToSelection)
         this.clearCropRegionButton.addEventListener('click', this.clearCropRegion)
@@ -241,24 +239,6 @@ export default class ControlsHandler {
             this.morphaweb.track("DivideMarkersByTwo");
         } catch (error) {
             this.morphaweb.track("ErrorDivideMarkersByTwo");
-        }
-    }
-
-    exportSampleDrumFile = () => {
-        try {
-            if (this.morphaweb.wavesurfer.getDuration() === 0) { return false; }
-            this.morphaweb.track("ExportSampleDrum");
-
-            const audioBuffer = this.morphaweb.wavesurfer.backend.buffer;
-            const sampleRate = audioBuffer.sampleRate;
-            const channelCount = audioBuffer.numberOfChannels;
-
-            // Get all channels as interleaved buffer
-            const interleavedBuffer = this.interleaveChannels(audioBuffer);
-
-            this.morphaweb.wavHandler.createSampleDrumBuffer(interleavedBuffer, this.morphaweb.markerHandler.getBottomMarkers());
-        } catch (error) {
-            this.morphaweb.track("ErrorExportSampleDrum");
         }
     }
 
