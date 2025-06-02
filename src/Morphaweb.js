@@ -13,12 +13,15 @@ export default class Morphaweb {
         this.scrollPos = 0
         this.scrollMin = 0
         this.playOffset = 0
-        
+
         this.wavesurfer = WaveSurfer.create({
             container: '#waveform',
             waveColor: '#ffd000',
             progressColor: 'white',
-            plugins: [MarkersPlugin.create(), RegionsPlugin.create()], 
+            plugins: [MarkersPlugin.create(), RegionsPlugin.create()],
+            minPxPerSec: 100,
+            cursorWidth: 1,
+            cursorColor: '#ff0000',
         });
 
         this.dropHandler = new DropHandler(this)
@@ -30,7 +33,7 @@ export default class Morphaweb {
 
         this.initAnalytics()
 
-        this.wavesurfer.on('ready',this.onReady.bind(this))
+        this.wavesurfer.on('ready', this.onReady.bind(this))
 
         // Add containers for BPM info
         this.createInfoDisplay();
@@ -62,7 +65,7 @@ export default class Morphaweb {
 
         const audioData = buffer.getChannelData(0);
         const sampleRate = buffer.sampleRate;
-        
+
         this.onsetHandler.detectOnsets(audioData, sampleRate);
     }
 
@@ -71,7 +74,7 @@ export default class Morphaweb {
         const container = document.createElement('div');
         container.id = 'audio-info';
         container.className = 'audio-info';
-        
+
         // Create BPM display
         this.bpmDisplay = document.createElement('div');
         this.bpmDisplay.id = 'bpm-display';

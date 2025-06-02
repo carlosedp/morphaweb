@@ -3,7 +3,7 @@ export default class ControlsHandler {
     constructor(morphaweb) {
         this.morphaweb = morphaweb
         this.playButton = document.getElementById("play")
-        this.pauseButton = document.getElementById("pause")
+        this.zoomSlider = document.querySelector('input[type="range"]')
         this.exportButton = document.getElementById("export")
         this.sliceButton = document.getElementById("auto-slice")
         this.sliceCountInput = document.getElementById("slice-count")
@@ -17,10 +17,10 @@ export default class ControlsHandler {
         this.createFadeOutRegionButton = document.getElementById("create-fade-out-region")
         this.applyFadesButton = document.getElementById("apply-fades")
         this.clearFadeRegionsButton = document.getElementById("clear-fade-regions")
-        
+
         // Crop region state
         this.cropRegion = null
-        
+
         // Fade region state
         this.fadeInRegion = null
         this.fadeOutRegion = null
@@ -30,8 +30,7 @@ export default class ControlsHandler {
 
         // Add listeners
         this.exportButton.addEventListener('click', this.exportWavFile)
-        this.playButton.addEventListener('click', this.play)
-        this.pauseButton.addEventListener('click', this.pause)
+        this.playButton.addEventListener('click', this.playToggle)
         this.sliceButton.addEventListener('click', this.handleAutoSlice)
         this.detectOnsetsButton.addEventListener('click', this.handleOnsetDetection)
         this.divideMarkersButton.addEventListener('click', this.divideMarkersByTwo)
@@ -44,6 +43,10 @@ export default class ControlsHandler {
         this.createFadeOutRegionButton.addEventListener('click', this.createFadeOutRegion)
         this.applyFadesButton.addEventListener('click', this.applyFades)
         this.clearFadeRegionsButton.addEventListener('click', this.clearFadeRegions)
+        this.zoomSlider.addEventListener('input', (e) => {
+            const minPxPerSec = e.target.valueAsNumber
+            this.morphaweb.wavesurfer.zoom(minPxPerSec)
+        })
 
         document.addEventListener('keydown', this.onKeydown.bind(this))
         this.morphaweb.wavesurfer.on('seek', this.onSeek.bind(this))
@@ -55,6 +58,13 @@ export default class ControlsHandler {
         })
         window.addEventListener("wheel", throttle(this.onWheel.bind(this), 10))
 
+        // Prevent spacebar from scrolling the page
+        window.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target == document.body) {
+                e.preventDefault();
+            }
+        });
+
         document.addEventListener('markers-changed', this.updateDivideButton.bind(this));
 
         // Initial states
@@ -64,7 +74,6 @@ export default class ControlsHandler {
 
     setButtonsState = (disabled) => {
         this.playButton.disabled = disabled;
-        this.pauseButton.disabled = disabled;
         this.exportButton.disabled = disabled;
         this.sliceButton.disabled = disabled;
         this.detectOnsetsButton.disabled = disabled;
@@ -114,23 +123,16 @@ export default class ControlsHandler {
             this.morphaweb.track("ErrorExportWavFile")
         }
     }
-
-    play = () => {
-        if (this.morphaweb.wavesurfer.isPlaying()) {
-            this.morphaweb.wavesurfer.seekTo(0)
-        }
-        this.morphaweb.wavesurfer.play()
-    }
-
-    pause = () => {
-        this.morphaweb.wavesurfer.pause()
-    }
-
     playToggle = () => {
-        if (this.morphaweb.wavesurfer.isPlaying()) {
-            this.morphaweb.wavesurfer.pause()
+        const playButton = document.getElementById('play');
+        const isPlaying = this.morphaweb.wavesurfer.isPlaying();
+
+        if (isPlaying) {
+            this.morphaweb.wavesurfer.pause();
+            playButton.textContent = '⏸ play/pause';
         } else {
-            this.morphaweb.wavesurfer.play()
+            this.morphaweb.wavesurfer.play();
+            playButton.textContent = '⏵ play/pause';
         }
     }
 
@@ -138,11 +140,14 @@ export default class ControlsHandler {
         this.morphaweb.playOffset = p
         this.morphaweb.markerHandler.removeTopMarker("top")
         this.morphaweb.markerHandler.createMarker(this.morphaweb.playOffset * this.morphaweb.wavesurfer.getDuration(), "top")
-        this.morphaweb.wavesurfer.play()
+        // this.morphaweb.wavesurfer.play()
     }
 
     onFinish = () => {
-        // Do nothing
+        // Start playback from the beginning
+        this.morphaweb.wavesurfer.seekTo(0);
+        this.morphaweb.wavesurfer.play()
+
     }
 
     onWheel = (e) => {
@@ -535,7 +540,7 @@ export default class ControlsHandler {
             for (let channel = 0; channel < channelCount; channel++) {
                 const originalChannelData = originalBuffer.getChannelData(channel);
                 const fadedChannelData = fadedBuffer.getChannelData(channel);
-                
+
                 // Copy original data
                 for (let i = 0; i < length; i++) {
                     fadedChannelData[i] = originalChannelData[i];

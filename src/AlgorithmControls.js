@@ -6,9 +6,10 @@ export default class AlgorithmControls {
     }
 
     createControls() {
-        const controlsContainer = document.createElement('div');
+        // const controlsContainer = document.createElement('div');
+        const controlsContainer = document.getElementById('algorithm-controls');
         controlsContainer.className = 'algorithm-controls';
-        
+
         // Frame Size Slider
         const frameSizeControl = this.createSlider({
             id: 'frame-size',
@@ -57,7 +58,8 @@ export default class AlgorithmControls {
 
         // Insert controls before the existing controls
         const existingControls = document.querySelector('.controls');
-        existingControls.insertBefore(controlsContainer, existingControls.firstChild);
+        // existingControls.appendChild(controlsContainer);
+        // existingControls.insertBefore(controlsContainer, existingControls.firstChild);
     }
 
     createSlider({ id, label, min, max, value, step, helpText }) {
@@ -79,7 +81,7 @@ export default class AlgorithmControls {
         slider.max = max;
         slider.value = value;
         slider.step = step;
-        
+
         // Calculate and set the initial position percentage
         const percentage = ((value - min) / (max - min)) * 100;
         slider.style.setProperty('--value', percentage + '%');
@@ -100,7 +102,7 @@ export default class AlgorithmControls {
         controlsWrapper.appendChild(labelElement);
         controlsWrapper.appendChild(slider);
         controlsWrapper.appendChild(valueDisplay);
-        
+
         // Add controls wrapper to main container
         container.appendChild(controlsWrapper);
 
@@ -126,7 +128,7 @@ export default class AlgorithmControls {
         const complexWeight = 1 - hfcWeight;
 
         let odfs, odfsWeights;
-        
+
         if (odfRatio === 0) {
             // Use only complex
             odfs = ['complex'];
@@ -161,4 +163,4 @@ export default class AlgorithmControls {
         // Set initial values
         this.handleSliderChange();
     }
-} 
+}
