@@ -124,17 +124,21 @@ export default class ControlsHandler {
       if (this.morphaweb.wavesurfer.getDuration() === 0) {
         return false;
       }
-      //if()
+
+      const audioBuffer = this.morphaweb.wavesurfer.backend.buffer;
+
+      // Store the original sample rate from the audio buffer
+      this.morphaweb.wavHandler.setOriginalSampleRate(audioBuffer.sampleRate);
 
       const buffer = [
-        this.morphaweb.wavesurfer.backend.buffer.getChannelData(0),
+        audioBuffer.getChannelData(0),
       ];
 
       try {
-        buffer.push(this.morphaweb.wavesurfer.backend.buffer.getChannelData(1));
+        buffer.push(audioBuffer.getChannelData(1));
       } catch (error) {
         // Duplicate L channel to R channel
-        buffer.push(this.morphaweb.wavesurfer.backend.buffer.getChannelData(0));
+        buffer.push(audioBuffer.getChannelData(0));
         console.log("No second channel");
       }
 
@@ -145,6 +149,7 @@ export default class ControlsHandler {
       this.morphaweb.track("ErrorExportWavFile");
     }
   };
+
   playToggle = () => {
     const playButton = document.getElementById("play");
     const isPlaying = this.morphaweb.wavesurfer.isPlaying();

@@ -5,7 +5,7 @@ export default class DropHandler {
     this.overlay = document.getElementById("overlay");
     this.messageOverlay = document.getElementById("message-overlay");
     this.messageText = document.getElementById("message-text");
-    this.crunker = new Crunker({ sampleRate: 48000 });
+    this.crunker = null; // Will be initialized with the correct sample rate when loading files
 
     document.addEventListener("dragover", this.allowDrop.bind(this));
     document.addEventListener("drop", this.onDrop.bind(this));
@@ -37,9 +37,25 @@ export default class DropHandler {
       console.log(file);
       await file.arrayBuffer().then(
         async (buf) => {
-          console.log(`Number of channels: ${buf.length}`);
           const p = await audioCtx.decodeAudioData(buf).then(
             async (buf) => {
+              console.log("=== LOAD DEBUG INFO ===")
+              console.log("Loaded file:", file.name);
+              console.log(`Audio sample rate: ${buf.sampleRate}`);
+              console.log(`Audio channels: ${buf.numberOfChannels}`);
+              console.log(`Buffer length: ${buf.length}`);
+              console.log(`Audio duration: ${buf.duration} seconds`);
+              console.log(`AudioContext sample rate: ${audioCtx.sampleRate}`);
+              console.log("========================");
+
+              // Store the original sample rate in the WavHandler for the first file
+              if (audioBuffers.length === 0) {
+                this.morphaweb.wavHandler.setOriginalSampleRate(buf.sampleRate);
+                // Initialize Crunker with the original sample rate to avoid unwanted resampling
+                this.crunker = new Crunker({ sampleRate: buf.sampleRate });
+                console.log(`Crunker initialized with sample rate: ${buf.sampleRate}`);
+              }
+
               if (buf.duration > MAX_DURATION_SECONDS) {
                 const truncatedBuffer = audioCtx.createBuffer(
                   buf.numberOfChannels,
@@ -93,6 +109,13 @@ export default class DropHandler {
     });
     const resolvedPromises = await Promise.all(promise);
     markers.pop();
+
+    // Ensure crunker is initialized (fallback to 44100 Hz if no files were processed)
+    if (!this.crunker) {
+      this.crunker = new Crunker({ sampleRate: 44100 });
+      console.log("Fallback: Crunker initialized with 44100 Hz");
+    }
+
     const concatted = this.crunker.concatAudio(audioBuffers);
     const ex = this.crunker.export(concatted, "audio/wav");
     const obj = {
