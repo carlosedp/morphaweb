@@ -1,6 +1,8 @@
 import WaveSurfer from "wavesurfer.js";
 import MarkersPlugin from "wavesurfer.js/src/plugin/markers";
 import RegionsPlugin from "wavesurfer.js/src/plugin/regions";
+import TimelinePlugin from "wavesurfer.js/src/plugin/timeline";
+import CursorPlugin from "wavesurfer.js/src/plugin/cursor";
 import DropHandler from "./DropHandler";
 import ControlsHandler from "./ControlsHandler";
 import MarkerHandler from "./MarkerHandler";
@@ -18,7 +20,36 @@ export default class Morphaweb {
       container: "#waveform",
       waveColor: "#ffd000",
       progressColor: "white",
-      plugins: [MarkersPlugin.create(), RegionsPlugin.create()],
+      plugins: [
+        MarkersPlugin.create(),
+        RegionsPlugin.create(),
+        TimelinePlugin.create({
+          container: "#waveform-timeline",
+          primaryFontColor: "white",
+          secondaryFontColor: "white",
+          primaryColor: "#ffd000",
+          secondaryColor: "#ffd000",
+          primaryFontSize: 12,
+          secondaryFontSize: 10,
+          height: 15,
+          notchPercentHeight: 30,
+          unlabeledNotchColor: "#ffd000",
+          labelPadding: 5,
+          formatTimeCallback: (seconds) => {
+            return this.formatTime(seconds);
+          }
+        }),
+        CursorPlugin.create({
+          showTime: true,
+          opacity: 1,
+          customShowTimeStyle: {
+            'background-color': '#000',
+            color: '#fff',
+            padding: '2px',
+            'font-size': '10px'
+          }
+        }),
+      ],
       minPxPerSec: 20,
       cursorWidth: 1,
       cursorColor: "#ff0000",

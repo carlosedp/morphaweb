@@ -9,7 +9,8 @@
     "clean": "rm -rf dist/",
     "deploy": "yarn build && gh-pages -d dist",
     "generateVersion": "git describe --tags > assets/VERSION.txt",
-    "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
+    "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\"",
+    "promote": "git branch production && git checkout production && git rebase main && git push origin production && git checkout main"
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "targets": {
@@ -40,6 +41,6 @@
     "jszip": "^3.7.1",
     "lodash": "^4.17.21",
     "wavefile": "^11.0.0",
-    "wavesurfer.js": "^6.6.2"
+    "wavesurfer.js": "^6.6"
   }
 }

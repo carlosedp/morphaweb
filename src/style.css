@@ -31,16 +31,25 @@ body {
     column-gap: 2rem;
 }
 
+.editor {
+    grid-area: main;
+}
+
+.waveform-container {
+    position: relative;
+    width: 100%;
+    border: 1px solid var(--main-color);
+}
+
 #waveform {
     width: 100%;
-    height: 100%;
     position: relative;
 }
 
-.editor {
-    grid-area: main;
-    border: 1px solid;
-    border-color: var(--main-color)
+#waveform-timeline {
+    width: 100%;
+    position: relative;
+    background-color: var(--main-bg-color);
 }
 
 .controls {
