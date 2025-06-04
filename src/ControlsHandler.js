@@ -159,7 +159,6 @@ export default class ControlsHandler {
 
       const audioBuffer = this.morphaweb.wavesurfer.backend.buffer;
 
-      console.log(audioBuffer.length);
       // Store the original sample rate from the audio buffer
       this.morphaweb.wavHandler.setOriginalSampleRate(audioBuffer.sampleRate);
       // this.morphaweb.wavHandler.setOriginalSampleRate(this.morphaweb.wavesurfer.sampleRate);
@@ -397,10 +396,22 @@ export default class ControlsHandler {
       const sampleRate = originalBuffer.sampleRate;
       const channelCount = originalBuffer.numberOfChannels;
 
-      // Calculate sample positions
-      const startSample = Math.floor(startTime * sampleRate);
-      const endSample = Math.floor(endTime * sampleRate);
+      // Get audio data for zero crossing detection (use first channel)
+      const audioData = originalBuffer.getChannelData(0);
+
+      // Calculate initial sample positions
+      const initialStartSample = Math.floor(startTime * sampleRate);
+      const initialEndSample = Math.floor(endTime * sampleRate);
+
+      // Find nearest zero crossings to prevent clicks
+      const startSample = this.findNearestZeroCrossing(audioData, initialStartSample);
+      const endSample = this.findNearestZeroCrossing(audioData, initialEndSample);
       const croppedLength = endSample - startSample;
+
+      // Log the adjustments made
+      const startAdjustment = Math.abs(startSample - initialStartSample) / sampleRate * 1000;
+      const endAdjustment = Math.abs(endSample - initialEndSample) / sampleRate * 1000;
+      console.log(`Zero crossing adjustments - Start: ${startAdjustment.toFixed(2)}ms, End: ${endAdjustment.toFixed(2)}ms`);
 
       // Create new audio buffer for cropped audio
       const audioContext = this.morphaweb.wavesurfer.backend.ac;
@@ -423,14 +434,24 @@ export default class ControlsHandler {
       // Load the cropped buffer into wavesurfer
       this.morphaweb.wavesurfer.loadDecodedBuffer(croppedBuffer);
 
+      // Calculate actual crop times after zero-crossing adjustment
+      const actualStartTime = startSample / sampleRate;
+      const actualEndTime = endSample / sampleRate;
+
       // Adjust existing markers to new timeline
-      this.adjustMarkersForCrop(startTime, endTime);
+      this.adjustMarkersForCrop(actualStartTime, actualEndTime);
 
       // Clear crop region
       this.clearCropRegion();
 
+      // Show message with adjustment info
+      const hasAdjustments = startAdjustment > 1 || endAdjustment > 1; // Show if >1ms adjustment
+      const adjustmentInfo = hasAdjustments ?
+        ` (adjusted ${startAdjustment.toFixed(1)}ms/${endAdjustment.toFixed(1)}ms to prevent clicks)` :
+        " (snapped to zero crossings)";
+
       this.showMessage(
-        `Audio cropped from ${this.formatTime(startTime)} to ${this.formatTime(endTime)}`,
+        `Audio cropped from ${this.formatTime(actualStartTime)} to ${this.formatTime(actualEndTime)}${adjustmentInfo}`,
       );
       this.morphaweb.track("CropAudio");
     } catch (error) {
@@ -458,6 +479,47 @@ export default class ControlsHandler {
       console.error("Error clearing crop region:", error);
     }
   };
+
+  // Zero-crossing detection methods for preventing clicks during cropping
+  findNearestZeroCrossing(audioData, index, maxOffset = 1000) {
+    // Search within maxOffset samples in both directions
+    let left = Math.max(0, index - maxOffset);
+    let right = Math.min(audioData.length - 1, index + maxOffset);
+
+    // Start from the index and move outward
+    for (let offset = 0; offset <= maxOffset; offset++) {
+      // Check forward
+      let forwardIndex = index + offset;
+      if (forwardIndex <= right) {
+        if (this.isZeroCrossing(audioData, forwardIndex)) {
+          return forwardIndex;
+        }
+      }
+
+      // Check backward
+      let backwardIndex = index - offset;
+      if (backwardIndex >= left) {
+        if (this.isZeroCrossing(audioData, backwardIndex)) {
+          return backwardIndex;
+        }
+      }
+    }
+
+    // If no zero crossing found, return original index
+    return index;
+  }
+
+  isZeroCrossing(audioData, index) {
+    // Check if this point represents a zero crossing
+    // We check if the signal crosses zero between this sample and the next
+    if (index >= audioData.length - 1) return false;
+
+    const current = audioData[index];
+    const next = audioData[index + 1];
+
+    // Check if the signal crosses zero (changes sign)
+    return (current <= 0 && next > 0) || (current >= 0 && next < 0);
+  }
 
   adjustMarkersForCrop = (cropStart, cropEnd) => {
     try {
