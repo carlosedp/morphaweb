@@ -127,12 +127,12 @@ export default class ControlsHandler {
 
       const audioBuffer = this.morphaweb.wavesurfer.backend.buffer;
 
+      console.log(audioBuffer.length);
       // Store the original sample rate from the audio buffer
       this.morphaweb.wavHandler.setOriginalSampleRate(audioBuffer.sampleRate);
+      // this.morphaweb.wavHandler.setOriginalSampleRate(this.morphaweb.wavesurfer.sampleRate);
 
-      const buffer = [
-        audioBuffer.getChannelData(0),
-      ];
+      const buffer = [audioBuffer.getChannelData(0)];
 
       try {
         buffer.push(audioBuffer.getChannelData(1));

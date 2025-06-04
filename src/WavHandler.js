@@ -90,30 +90,40 @@ export default class WavHandler {
   }
 
   async createFileFromBuffer(buffer, markers) {
+    const originalRate = this.originalSampleRate || 44100;
+
     console.log("=== EXPORT DEBUG INFO ===");
     console.log("Input buffer channels:", buffer.length);
     console.log("Input buffer length:", buffer[0].length);
-    console.log("Original sample rate:", this.originalSampleRate);
+    console.log("Original sample rate:", originalRate);
     console.log("Target sample rate:", this.targetSampleRate);
-    console.log("Original duration:", buffer[0].length / (this.originalSampleRate || 44100), "seconds");
+    console.log("Original duration:", buffer[0].length / originalRate, "seconds");
+
+    // Check if resampling is needed
+    const needsResampling = originalRate !== this.targetSampleRate;
+    console.log("Needs resampling:", needsResampling);
     console.log("========================");
 
-    // Resample buffer to target sample rate if needed
-    const resampledBuffer = this.resampleBuffer(
-      buffer,
-      this.originalSampleRate || 44100,
-      this.targetSampleRate
-    );
+    // Only resample if sample rates are different
+    const finalBuffer = needsResampling
+      ? this.resampleBuffer(buffer, originalRate, this.targetSampleRate)
+      : buffer;
 
-    console.log("=== RESAMPLE DEBUG INFO ===");
-    console.log("Resampled buffer length:", resampledBuffer[0].length);
-    console.log("Expected resampled duration:", resampledBuffer[0].length / this.targetSampleRate, "seconds");
-    console.log("Sample rate ratio:", this.targetSampleRate / (this.originalSampleRate || 44100));
-    console.log("============================");
+    if (needsResampling) {
+      console.log("=== RESAMPLE DEBUG INFO ===");
+      console.log("Resampled buffer length:", finalBuffer[0].length);
+      console.log("Expected resampled duration:", finalBuffer[0].length / this.targetSampleRate, "seconds");
+      console.log("Sample rate ratio:", this.targetSampleRate / originalRate);
+      console.log("============================");
+    } else {
+      console.log("=== NO RESAMPLING NEEDED ===");
+      console.log("Using original buffer directly");
+      console.log("=============================");
+    }
 
     console.log("Exporting audio...");
     let file = new WaveFile();
-    file.fromScratch(2, this.targetSampleRate, "32f", resampledBuffer);
+    file.fromScratch(2, this.targetSampleRate, "32f", finalBuffer);
 
     // Add markers as cue points (no sample rate adjustment needed - time stays the same)
     for (let marker of markers) {
@@ -137,17 +147,23 @@ export default class WavHandler {
   }
 
   async createSampleDrumBuffer(buffer, markers) {
+    const originalRate = this.originalSampleRate || 44100;
     console.log("Exporting audio... sample drum");
 
-    // Resample buffer to target sample rate if needed (but use 16-bit for sample drums)
-    const resampledBuffer = this.resampleBuffer(
-      buffer,
-      this.originalSampleRate || 44100,
-      this.targetSampleRate
-    );
+    // Only resample if sample rates are different (but use 16-bit for sample drums)
+    const needsResampling = originalRate !== this.targetSampleRate;
+    const finalBuffer = needsResampling
+      ? this.resampleBuffer(buffer, originalRate, this.targetSampleRate)
+      : buffer;
+
+    if (needsResampling) {
+      console.log(`Resampling sample drum from ${originalRate} to ${this.targetSampleRate} Hz`);
+    } else {
+      console.log(`No resampling needed for sample drum - already at ${this.targetSampleRate} Hz`);
+    }
 
     let file = new WaveFile();
-    file.fromScratch(2, this.targetSampleRate, "16", resampledBuffer);
+    file.fromScratch(2, this.targetSampleRate, "16", finalBuffer);
 
     // Note: markers are currently commented out for sample drum export
     // // Add markers as cue points
@@ -172,17 +188,23 @@ export default class WavHandler {
   }
 
   async createCroppedBuffer(buffer, markers, filename = "cropped.wav") {
+    const originalRate = this.originalSampleRate || 44100;
     console.log("Exporting cropped audio...");
 
-    // Resample buffer to target sample rate if needed
-    const resampledBuffer = this.resampleBuffer(
-      buffer,
-      this.originalSampleRate || 44100,
-      this.targetSampleRate
-    );
+    // Only resample if sample rates are different
+    const needsResampling = originalRate !== this.targetSampleRate;
+    const finalBuffer = needsResampling
+      ? this.resampleBuffer(buffer, originalRate, this.targetSampleRate)
+      : buffer;
+
+    if (needsResampling) {
+      console.log(`Resampling cropped audio from ${originalRate} to ${this.targetSampleRate} Hz`);
+    } else {
+      console.log(`No resampling needed for cropped audio - already at ${this.targetSampleRate} Hz`);
+    }
 
     let file = new WaveFile();
-    file.fromScratch(2, this.targetSampleRate, "32f", resampledBuffer);
+    file.fromScratch(2, this.targetSampleRate, "32f", finalBuffer);
 
     // Add markers as cue points (no sample rate adjustment needed - time stays the same)
     for (let marker of markers) {
