@@ -80,7 +80,9 @@ export default class ControlsHandler {
       // Update all displays when audio is ready
       this.morphaweb.updateAllDisplays();
     });
-    window.addEventListener("wheel", throttle(this.onWheel.bind(this), 10), { passive: false });
+    window.addEventListener("wheel", throttle(this.onWheel.bind(this), 10), {
+      passive: false,
+    });
 
     // Prevent spacebar from scrolling the page
     window.addEventListener("keydown", function (e) {
@@ -216,14 +218,15 @@ export default class ControlsHandler {
 
   onWheel = (e) => {
     // Check if mouse is over the waveform div or any of its children
-    const waveformDiv = document.getElementById('waveform');
+    const waveformDiv = document.getElementById("waveform");
 
     // Check if the event target is the waveform div or inside it
     let isOverWaveform = false;
     if (waveformDiv) {
-      isOverWaveform = waveformDiv.contains(e.target) ||
+      isOverWaveform =
+        waveformDiv.contains(e.target) ||
         e.target === waveformDiv ||
-        e.target.closest('#waveform') !== null;
+        e.target.closest("#waveform") !== null;
     }
 
     if (isOverWaveform) {
@@ -415,14 +418,24 @@ export default class ControlsHandler {
       const initialEndSample = Math.floor(endTime * sampleRate);
 
       // Find nearest zero crossings to prevent clicks
-      const startSample = this.findNearestZeroCrossing(audioData, initialStartSample);
-      const endSample = this.findNearestZeroCrossing(audioData, initialEndSample);
+      const startSample = this.findNearestZeroCrossing(
+        audioData,
+        initialStartSample,
+      );
+      const endSample = this.findNearestZeroCrossing(
+        audioData,
+        initialEndSample,
+      );
       const croppedLength = endSample - startSample;
 
       // Log the adjustments made
-      const startAdjustment = Math.abs(startSample - initialStartSample) / sampleRate * 1000;
-      const endAdjustment = Math.abs(endSample - initialEndSample) / sampleRate * 1000;
-      console.log(`Zero crossing adjustments - Start: ${startAdjustment.toFixed(2)}ms, End: ${endAdjustment.toFixed(2)}ms`);
+      const startAdjustment =
+        (Math.abs(startSample - initialStartSample) / sampleRate) * 1000;
+      const endAdjustment =
+        (Math.abs(endSample - initialEndSample) / sampleRate) * 1000;
+      console.log(
+        `Zero crossing adjustments - Start: ${startAdjustment.toFixed(2)}ms, End: ${endAdjustment.toFixed(2)}ms`,
+      );
 
       // Create new audio buffer for cropped audio
       const audioContext = this.morphaweb.wavesurfer.backend.ac;
@@ -457,9 +470,9 @@ export default class ControlsHandler {
 
       // Show message with adjustment info
       const hasAdjustments = startAdjustment > 1 || endAdjustment > 1; // Show if >1ms adjustment
-      const adjustmentInfo = hasAdjustments ?
-        ` (adjusted ${startAdjustment.toFixed(1)}ms/${endAdjustment.toFixed(1)}ms to prevent clicks)` :
-        " (snapped to zero crossings)";
+      const adjustmentInfo = hasAdjustments
+        ? ` (adjusted ${startAdjustment.toFixed(1)}ms/${endAdjustment.toFixed(1)}ms to prevent clicks)`
+        : " (snapped to zero crossings)";
 
       this.showMessage(
         `Audio cropped from ${this.formatTime(actualStartTime)} to ${this.formatTime(actualEndTime)}${adjustmentInfo}`,
@@ -812,9 +825,11 @@ export default class ControlsHandler {
   };
 
   showWaveformLoadOverlay = () => {
-    if (this.waveformLoadOverlay) this.waveformLoadOverlay.style.display = "flex";
+    if (this.waveformLoadOverlay)
+      this.waveformLoadOverlay.style.display = "flex";
   };
   hideWaveformLoadOverlay = () => {
-    if (this.waveformLoadOverlay) this.waveformLoadOverlay.style.display = "none";
+    if (this.waveformLoadOverlay)
+      this.waveformLoadOverlay.style.display = "none";
   };
 }

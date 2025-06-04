@@ -31,7 +31,11 @@ export default class WavHandler {
     console.log("Ratio:", ratio);
     console.log("Original length:", inputBuffer[0].length);
     console.log("New length:", newLength);
-    console.log("Original duration:", inputBuffer[0].length / fromSampleRate, "seconds");
+    console.log(
+      "Original duration:",
+      inputBuffer[0].length / fromSampleRate,
+      "seconds",
+    );
     console.log("New duration:", newLength / toSampleRate, "seconds");
     console.log("===============================");
 
@@ -48,7 +52,8 @@ export default class WavHandler {
 
         if (index + 1 < channelData.length) {
           // Linear interpolation
-          newChannelData[i] = channelData[index] * (1 - fraction) +
+          newChannelData[i] =
+            channelData[index] * (1 - fraction) +
             channelData[index + 1] * fraction;
         } else {
           newChannelData[i] = channelData[index] || 0;
@@ -97,7 +102,11 @@ export default class WavHandler {
     console.log("Input buffer length:", buffer[0].length);
     console.log("Original sample rate:", originalRate);
     console.log("Target sample rate:", this.targetSampleRate);
-    console.log("Original duration:", buffer[0].length / originalRate, "seconds");
+    console.log(
+      "Original duration:",
+      buffer[0].length / originalRate,
+      "seconds",
+    );
 
     // Check if resampling is needed
     const needsResampling = originalRate !== this.targetSampleRate;
@@ -112,7 +121,11 @@ export default class WavHandler {
     if (needsResampling) {
       console.log("=== RESAMPLE DEBUG INFO ===");
       console.log("Resampled buffer length:", finalBuffer[0].length);
-      console.log("Expected resampled duration:", finalBuffer[0].length / this.targetSampleRate, "seconds");
+      console.log(
+        "Expected resampled duration:",
+        finalBuffer[0].length / this.targetSampleRate,
+        "seconds",
+      );
       console.log("Sample rate ratio:", this.targetSampleRate / originalRate);
       console.log("============================");
     } else {
@@ -156,9 +169,13 @@ export default class WavHandler {
       : buffer;
 
     if (needsResampling) {
-      console.log(`Resampling sample drum from ${originalRate} to ${this.targetSampleRate} Hz`);
+      console.log(
+        `Resampling sample drum from ${originalRate} to ${this.targetSampleRate} Hz`,
+      );
     } else {
-      console.log(`No resampling needed for sample drum - already at ${this.targetSampleRate} Hz`);
+      console.log(
+        `No resampling needed for sample drum - already at ${this.targetSampleRate} Hz`,
+      );
     }
 
     let file = new WaveFile();
@@ -197,9 +214,13 @@ export default class WavHandler {
       : buffer;
 
     if (needsResampling) {
-      console.log(`Resampling cropped audio from ${originalRate} to ${this.targetSampleRate} Hz`);
+      console.log(
+        `Resampling cropped audio from ${originalRate} to ${this.targetSampleRate} Hz`,
+      );
     } else {
-      console.log(`No resampling needed for cropped audio - already at ${this.targetSampleRate} Hz`);
+      console.log(
+        `No resampling needed for cropped audio - already at ${this.targetSampleRate} Hz`,
+      );
     }
 
     let file = new WaveFile();

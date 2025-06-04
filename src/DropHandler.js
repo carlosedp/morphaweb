@@ -35,11 +35,11 @@ export default class DropHandler {
         dataView.getUint8(0),
         dataView.getUint8(1),
         dataView.getUint8(2),
-        dataView.getUint8(3)
+        dataView.getUint8(3),
       );
 
-      if (riffHeader !== 'RIFF') {
-        console.log('Not a WAV file, cannot detect original sample rate');
+      if (riffHeader !== "RIFF") {
+        console.log("Not a WAV file, cannot detect original sample rate");
         return null;
       }
 
@@ -48,11 +48,11 @@ export default class DropHandler {
         dataView.getUint8(8),
         dataView.getUint8(9),
         dataView.getUint8(10),
-        dataView.getUint8(11)
+        dataView.getUint8(11),
       );
 
-      if (waveHeader !== 'WAVE') {
-        console.log('Not a valid WAV file');
+      if (waveHeader !== "WAVE") {
+        console.log("Not a valid WAV file");
         return null;
       }
 
@@ -61,7 +61,7 @@ export default class DropHandler {
       // console.log(`Original file sample rate from header: ${sampleRate} Hz`);
       return sampleRate;
     } catch (error) {
-      console.error('Error reading WAV header:', error);
+      console.error("Error reading WAV header:", error);
       return null;
     }
   }
@@ -86,10 +86,14 @@ export default class DropHandler {
           });
           const p = await audioCtx.decodeAudioData(buf).then(
             async (decodedBuf) => {
-              console.log("=== LOAD DEBUG INFO ===")
+              console.log("=== LOAD DEBUG INFO ===");
               console.log("Loaded file:", file.name);
-              console.log(`Sample rate (from header): ${originalSampleRate} Hz`);
-              console.log(`AudioContext decoded sample rate: ${decodedBuf.sampleRate} Hz`);
+              console.log(
+                `Sample rate (from header): ${originalSampleRate} Hz`,
+              );
+              console.log(
+                `AudioContext decoded sample rate: ${decodedBuf.sampleRate} Hz`,
+              );
               console.log(`Audio channels: ${decodedBuf.numberOfChannels}`);
               console.log(`Buffer length: ${decodedBuf.length}`);
               console.log(`Audio duration: ${decodedBuf.duration} seconds`);
@@ -97,11 +101,16 @@ export default class DropHandler {
 
               // Store the ORIGINAL sample rate from the file header for the first file
               if (audioBuffers.length === 0) {
-                const sampleRateToUse = originalSampleRate || decodedBuf.sampleRate;
-                this.morphaweb.wavHandler.setOriginalSampleRate(sampleRateToUse);
+                const sampleRateToUse =
+                  originalSampleRate || decodedBuf.sampleRate;
+                this.morphaweb.wavHandler.setOriginalSampleRate(
+                  sampleRateToUse,
+                );
                 // Initialize Crunker with the original sample rate to avoid unwanted resampling
                 this.crunker = new Crunker({ sampleRate: sampleRateToUse });
-                console.log(`Crunker initialized with sample rate: ${sampleRateToUse}`);
+                console.log(
+                  `Crunker initialized with sample rate: ${sampleRateToUse}`,
+                );
               }
               console.log("========================");
 
@@ -122,7 +131,9 @@ export default class DropHandler {
                       .getChannelData(channel)
                       .slice(
                         0,
-                        Math.floor(MAX_DURATION_SECONDS * decodedBuf.sampleRate),
+                        Math.floor(
+                          MAX_DURATION_SECONDS * decodedBuf.sampleRate,
+                        ),
                       ),
                     channel,
                   );
