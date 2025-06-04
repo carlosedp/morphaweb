@@ -25,55 +25,104 @@ export default class DropHandler {
     }, duration);
   }
 
+  // Function to read the original sample rate from WAV file header
+  getOriginalSampleRate(arrayBuffer) {
+    try {
+      const dataView = new DataView(arrayBuffer);
+
+      // Check if it's a WAV file (RIFF header)
+      const riffHeader = String.fromCharCode(
+        dataView.getUint8(0),
+        dataView.getUint8(1),
+        dataView.getUint8(2),
+        dataView.getUint8(3)
+      );
+
+      if (riffHeader !== 'RIFF') {
+        console.log('Not a WAV file, cannot detect original sample rate');
+        return null;
+      }
+
+      // Check WAVE format
+      const waveHeader = String.fromCharCode(
+        dataView.getUint8(8),
+        dataView.getUint8(9),
+        dataView.getUint8(10),
+        dataView.getUint8(11)
+      );
+
+      if (waveHeader !== 'WAVE') {
+        console.log('Not a valid WAV file');
+        return null;
+      }
+
+      // Sample rate is at byte offset 24 (little-endian 32-bit integer)
+      const sampleRate = dataView.getUint32(24, true);
+      // console.log(`Original file sample rate from header: ${sampleRate} Hz`);
+      return sampleRate;
+    } catch (error) {
+      console.error('Error reading WAV header:', error);
+      return null;
+    }
+  }
+
   async loadFiles(files) {
     const MAX_DURATION_SECONDS = 174; // 2.9 minutes in seconds
 
     let audioBuffers = [];
-    let audioCtx = new AudioContext();
+    let audioCtx;
     let markers = [];
     let offset = 0;
+    let originalSampleRate = null;
     const fileArray = [...files];
     const promise = fileArray.map(async (file) => {
       console.log(file);
       await file.arrayBuffer().then(
         async (buf) => {
+          // Detect original sample rate from file header before AudioContext processes it
+          originalSampleRate = this.getOriginalSampleRate(buf);
+          audioCtx = new AudioContext({
+            sampleRate: originalSampleRate || 44100, // Fallback to 44100 Hz if not detected}
+          });
           const p = await audioCtx.decodeAudioData(buf).then(
-            async (buf) => {
+            async (decodedBuf) => {
               console.log("=== LOAD DEBUG INFO ===")
               console.log("Loaded file:", file.name);
-              console.log(`Audio sample rate: ${buf.sampleRate}`);
-              console.log(`Audio channels: ${buf.numberOfChannels}`);
-              console.log(`Buffer length: ${buf.length}`);
-              console.log(`Audio duration: ${buf.duration} seconds`);
+              console.log(`Sample rate (from header): ${originalSampleRate} Hz`);
+              console.log(`AudioContext decoded sample rate: ${decodedBuf.sampleRate} Hz`);
+              console.log(`Audio channels: ${decodedBuf.numberOfChannels}`);
+              console.log(`Buffer length: ${decodedBuf.length}`);
+              console.log(`Audio duration: ${decodedBuf.duration} seconds`);
               console.log(`AudioContext sample rate: ${audioCtx.sampleRate}`);
+
+              // Store the ORIGINAL sample rate from the file header for the first file
+              if (audioBuffers.length === 0) {
+                const sampleRateToUse = originalSampleRate || decodedBuf.sampleRate;
+                this.morphaweb.wavHandler.setOriginalSampleRate(sampleRateToUse);
+                // Initialize Crunker with the original sample rate to avoid unwanted resampling
+                this.crunker = new Crunker({ sampleRate: sampleRateToUse });
+                console.log(`Crunker initialized with sample rate: ${sampleRateToUse}`);
+              }
               console.log("========================");
 
-              // Store the original sample rate in the WavHandler for the first file
-              if (audioBuffers.length === 0) {
-                this.morphaweb.wavHandler.setOriginalSampleRate(buf.sampleRate);
-                // Initialize Crunker with the original sample rate to avoid unwanted resampling
-                this.crunker = new Crunker({ sampleRate: buf.sampleRate });
-                console.log(`Crunker initialized with sample rate: ${buf.sampleRate}`);
-              }
-
-              if (buf.duration > MAX_DURATION_SECONDS) {
+              if (decodedBuf.duration > MAX_DURATION_SECONDS) {
                 const truncatedBuffer = audioCtx.createBuffer(
-                  buf.numberOfChannels,
-                  Math.floor(MAX_DURATION_SECONDS * buf.sampleRate),
-                  buf.sampleRate,
+                  decodedBuf.numberOfChannels,
+                  Math.floor(MAX_DURATION_SECONDS * decodedBuf.sampleRate),
+                  decodedBuf.sampleRate,
                 );
 
                 for (
                   let channel = 0;
-                  channel < buf.numberOfChannels;
+                  channel < decodedBuf.numberOfChannels;
                   channel++
                 ) {
                   truncatedBuffer.copyToChannel(
-                    buf
+                    decodedBuf
                       .getChannelData(channel)
                       .slice(
                         0,
-                        Math.floor(MAX_DURATION_SECONDS * buf.sampleRate),
+                        Math.floor(MAX_DURATION_SECONDS * decodedBuf.sampleRate),
                       ),
                     channel,
                   );
@@ -82,7 +131,7 @@ export default class DropHandler {
                 this.showMessage(
                   `Audio file longer than ${MAX_DURATION_SECONDS / 60} minutes. It has been truncated.`,
                 );
-                buf = truncatedBuffer;
+                decodedBuf = truncatedBuffer;
               }
 
               let m = await this.morphaweb.wavHandler.getMarkersFromFile(file);
@@ -92,9 +141,9 @@ export default class DropHandler {
               });
               markers.push(...m);
               // add marker between multiple files
-              markers.push({ position: buf.duration * 1000 });
-              offset += buf.duration * 1000;
-              audioBuffers.push(buf);
+              markers.push({ position: decodedBuf.duration * 1000 });
+              offset += decodedBuf.duration * 1000;
+              audioBuffers.push(decodedBuf);
             },
             () => {
               this.morphaweb.track("ErrorFileUploadMarkers");
@@ -121,6 +170,7 @@ export default class DropHandler {
     const obj = {
       blob: ex.blob,
       markers: markers,
+      sampleRate: originalSampleRate,
     };
     return obj;
   }
@@ -131,6 +181,7 @@ export default class DropHandler {
     this.morphaweb.wavesurfer.clearMarkers();
     this.loadFiles(e.dataTransfer.files).then((res) => {
       this.morphaweb.wavesurfer.loadBlob(res.blob);
+      this.morphaweb.wavesurfer.sampleRate = res.sampleRate;
       this.morphaweb.wavHandler.markers = res.markers;
     });
   }

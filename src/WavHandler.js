@@ -12,7 +12,7 @@ export default class WavHandler {
 
   setOriginalSampleRate(sampleRate) {
     this.originalSampleRate = sampleRate;
-    console.log(`Original sample rate set to: ${sampleRate}`);
+    // console.log(`Original sample rate set to: ${sampleRate}`);
   }
 
   // Simple linear interpolation resampling
