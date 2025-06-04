@@ -367,3 +367,31 @@ button:disabled .text-lg,
 button:disabled .text-xs {
     opacity: 0.5;
 }
+
+/* Audio status display */
+.audio-status {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 208, 0, 0.1);
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.audio-status>div {
+    margin: 2px 0;
+    color: #ffd000;
+}
+
+#crop-info {
+    color: #ffd000 !important;
+}
+
+#fade-in-info {
+    color: #00ff00 !important;
+}
+
+#fade-out-info {
+    color: #ff0000 !important;
+}

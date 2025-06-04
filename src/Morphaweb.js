@@ -19,7 +19,7 @@ export default class Morphaweb {
       waveColor: "#ffd000",
       progressColor: "white",
       plugins: [MarkersPlugin.create(), RegionsPlugin.create()],
-      minPxPerSec: 100,
+      minPxPerSec: 20,
       cursorWidth: 1,
       cursorColor: "#ff0000",
     });
@@ -37,6 +37,9 @@ export default class Morphaweb {
 
     // Add containers for BPM info
     this.createInfoDisplay();
+
+    // Set up zoom change listener
+    this.setupZoomListener();
   }
 
   onReady = async () => {
@@ -45,6 +48,9 @@ export default class Morphaweb {
     );
     this.scrollPos = this.scrollMin;
     this.markerHandler.addMarkers(this.wavHandler.markers);
+
+    // Update all displays when audio is ready
+    this.updateAllDisplays();
   };
 
   initAnalytics() {
@@ -91,5 +97,92 @@ export default class Morphaweb {
     if (this.bpmDisplay) {
       this.bpmDisplay.textContent = `BPM: ${bpm}`;
     }
+  }
+
+  // Format time in MM:SS format
+  formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Update zoom level display
+  updateZoomDisplay() {
+    const zoomElement = document.getElementById('zoom-level');
+    if (zoomElement && this.wavesurfer) {
+      const zoomLevel = this.wavesurfer.params.minPxPerSec || 20;
+      zoomElement.textContent = `Zoom: ${zoomLevel} px/sec`;
+    }
+  }
+
+  // Update audio duration display
+  updateDurationDisplay() {
+    const durationElement = document.getElementById('audio-duration');
+    if (durationElement && this.wavesurfer) {
+      const duration = this.wavesurfer.getDuration();
+      if (duration > 0) {
+        durationElement.textContent = `Duration: ${this.formatTime(duration)}`;
+      } else {
+        durationElement.textContent = 'Duration: --:--';
+      }
+    }
+  }
+
+  // Update region information displays
+  updateRegionDisplays() {
+    this.updateCropRegionDisplay();
+    this.updateFadeRegionDisplays();
+  }
+
+  // Update crop region display
+  updateCropRegionDisplay() {
+    const cropElement = document.getElementById('crop-info');
+    if (cropElement && this.controlsHandler.cropRegion) {
+      const start = this.controlsHandler.cropRegion.start;
+      const end = this.controlsHandler.cropRegion.end;
+      cropElement.textContent = `Crop: ${this.formatTime(start)} - ${this.formatTime(end)}`;
+      cropElement.style.display = 'block';
+    } else if (cropElement) {
+      cropElement.style.display = 'none';
+    }
+  }
+
+  // Update fade region displays
+  updateFadeRegionDisplays() {
+    const fadeInElement = document.getElementById('fade-in-info');
+    const fadeOutElement = document.getElementById('fade-out-info');
+
+    if (fadeInElement && this.controlsHandler.fadeInRegion) {
+      const start = this.controlsHandler.fadeInRegion.start;
+      const end = this.controlsHandler.fadeInRegion.end;
+      fadeInElement.textContent = `Fade In: ${this.formatTime(start)} - ${this.formatTime(end)}`;
+      fadeInElement.style.display = 'block';
+    } else if (fadeInElement) {
+      fadeInElement.style.display = 'none';
+    }
+
+    if (fadeOutElement && this.controlsHandler.fadeOutRegion) {
+      const start = this.controlsHandler.fadeOutRegion.start;
+      const end = this.controlsHandler.fadeOutRegion.end;
+      fadeOutElement.textContent = `Fade Out: ${this.formatTime(start)} - ${this.formatTime(end)}`;
+      fadeOutElement.style.display = 'block';
+    } else if (fadeOutElement) {
+      fadeOutElement.style.display = 'none';
+    }
+  }
+
+  // Update all displays
+  updateAllDisplays() {
+    this.updateZoomDisplay();
+    this.updateDurationDisplay();
+    this.updateRegionDisplays();
+  }
+
+  // Set up zoom change listener
+  setupZoomListener() {
+    // Listen for zoom changes from wavesurfer
+    this.wavesurfer.on('zoom', (minPxPerSec) => {
+      this.updateZoomDisplay();
+    });
   }
 }

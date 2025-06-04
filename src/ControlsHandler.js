@@ -66,6 +66,8 @@ export default class ControlsHandler {
     this.zoomSlider.addEventListener("input", (e) => {
       const minPxPerSec = e.target.valueAsNumber;
       this.morphaweb.wavesurfer.zoom(minPxPerSec);
+      // Update zoom display
+      this.morphaweb.updateZoomDisplay();
     });
 
     document.addEventListener("keydown", this.onKeydown.bind(this));
@@ -75,6 +77,8 @@ export default class ControlsHandler {
       this.setButtonsState(false);
       this.clearCropRegion(); // Clear any existing crop region when new audio loads
       this.clearFadeRegions(); // Clear any existing fade regions when new audio loads
+      // Update all displays when audio is ready
+      this.morphaweb.updateAllDisplays();
     });
     window.addEventListener("wheel", throttle(this.onWheel.bind(this), 10), { passive: false });
 
@@ -235,6 +239,9 @@ export default class ControlsHandler {
         if (this.zoomSlider) {
           this.zoomSlider.value = this.morphaweb.scrollPos;
         }
+
+        // Update zoom display
+        this.morphaweb.updateZoomDisplay();
       }
       return false; // Additional prevention
     }
@@ -365,9 +372,13 @@ export default class ControlsHandler {
         this.showMessage(
           `Crop region: ${this.formatTime(this.cropRegion.start)} - ${this.formatTime(this.cropRegion.end)}`,
         );
+        // Update region displays
+        this.morphaweb.updateRegionDisplays();
       });
 
       this.showMessage(`Crop region created. Drag edges to adjust selection.`);
+      // Update region displays
+      this.morphaweb.updateRegionDisplays();
       this.morphaweb.track("CreateCropRegion");
     } catch (error) {
       this.morphaweb.track("ErrorCreateCropRegion");
@@ -453,6 +464,9 @@ export default class ControlsHandler {
       this.showMessage(
         `Audio cropped from ${this.formatTime(actualStartTime)} to ${this.formatTime(actualEndTime)}${adjustmentInfo}`,
       );
+
+      // Update duration display after cropping
+      this.morphaweb.updateDurationDisplay();
       this.morphaweb.track("CropAudio");
     } catch (error) {
       this.morphaweb.track("ErrorCropAudio");
@@ -473,6 +487,8 @@ export default class ControlsHandler {
       this.clearCropRegionButton.disabled = true;
       this.createCropRegionButton.disabled = false;
 
+      // Update region displays
+      this.morphaweb.updateRegionDisplays();
       this.morphaweb.track("ClearCropRegion");
     } catch (error) {
       this.morphaweb.track("ErrorClearCropRegion");
@@ -609,11 +625,15 @@ export default class ControlsHandler {
         this.showMessage(
           `Fade-in region: ${this.formatTime(this.fadeInRegion.start)} - ${this.formatTime(this.fadeInRegion.end)}`,
         );
+        // Update region displays
+        this.morphaweb.updateRegionDisplays();
       });
 
       this.showMessage(
         `Fade-in region created. Drag edges to adjust fade length.`,
       );
+      // Update region displays
+      this.morphaweb.updateRegionDisplays();
       this.morphaweb.track("CreateFadeInRegion");
     } catch (error) {
       this.morphaweb.track("ErrorCreateFadeInRegion");
@@ -654,11 +674,15 @@ export default class ControlsHandler {
         this.showMessage(
           `Fade-out region: ${this.formatTime(this.fadeOutRegion.start)} - ${this.formatTime(this.fadeOutRegion.end)}`,
         );
+        // Update region displays
+        this.morphaweb.updateRegionDisplays();
       });
 
       this.showMessage(
         `Fade-out region created. Drag edges to adjust fade length.`,
       );
+      // Update region displays
+      this.morphaweb.updateRegionDisplays();
       this.morphaweb.track("CreateFadeOutRegion");
     } catch (error) {
       this.morphaweb.track("ErrorCreateFadeOutRegion");
@@ -747,6 +771,8 @@ export default class ControlsHandler {
       this.clearFadeRegions();
 
       this.showMessage("Fade effects applied successfully!");
+      // Update duration display (though it shouldn't change)
+      this.morphaweb.updateDurationDisplay();
       this.morphaweb.track("ApplyFades");
     } catch (error) {
       this.morphaweb.track("ErrorApplyFades");
@@ -770,6 +796,8 @@ export default class ControlsHandler {
       // Update button states
       this.updateFadeButtonStates();
 
+      // Update region displays
+      this.morphaweb.updateRegionDisplays();
       this.morphaweb.track("ClearFadeRegions");
     } catch (error) {
       this.morphaweb.track("ErrorClearFadeRegions");
