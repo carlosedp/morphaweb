@@ -76,7 +76,7 @@ export default class ControlsHandler {
       this.clearCropRegion(); // Clear any existing crop region when new audio loads
       this.clearFadeRegions(); // Clear any existing fade regions when new audio loads
     });
-    window.addEventListener("wheel", throttle(this.onWheel.bind(this), 10));
+    window.addEventListener("wheel", throttle(this.onWheel.bind(this), 10), { passive: false });
 
     // Prevent spacebar from scrolling the page
     window.addEventListener("keydown", function (e) {
@@ -212,10 +212,34 @@ export default class ControlsHandler {
   };
 
   onWheel = (e) => {
-    if (this.morphaweb.scrollPos + e.deltaY >= this.morphaweb.scrollMin) {
-      this.morphaweb.scrollPos = this.morphaweb.scrollPos + e.deltaY;
-      this.morphaweb.wavesurfer.zoom(this.morphaweb.scrollPos);
+    // Check if mouse is over the waveform div or any of its children
+    const waveformDiv = document.getElementById('waveform');
+
+    // Check if the event target is the waveform div or inside it
+    let isOverWaveform = false;
+    if (waveformDiv) {
+      isOverWaveform = waveformDiv.contains(e.target) ||
+        e.target === waveformDiv ||
+        e.target.closest('#waveform') !== null;
     }
+
+    if (isOverWaveform) {
+      // Mouse is over waveform - control zoom and prevent page scroll
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (this.morphaweb.scrollPos + e.deltaY >= this.morphaweb.scrollMin) {
+        this.morphaweb.scrollPos = this.morphaweb.scrollPos + e.deltaY;
+        this.morphaweb.wavesurfer.zoom(this.morphaweb.scrollPos);
+
+        // Sync the zoom slider with the new zoom level
+        if (this.zoomSlider) {
+          this.zoomSlider.value = this.morphaweb.scrollPos;
+        }
+      }
+      return false; // Additional prevention
+    }
+    // If mouse is outside waveform div, do nothing - let browser handle page scroll
   };
 
   onKeydown = (e) => {
