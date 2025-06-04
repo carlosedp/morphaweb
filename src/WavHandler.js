@@ -139,7 +139,6 @@ export default class WavHandler {
     }
 
     const data = file.toDataURI();
-
     // Determine file extension based on original format
     const filename = "export.wav";
     console.log("Saving file...");

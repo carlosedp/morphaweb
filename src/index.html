@@ -19,7 +19,14 @@
     <section id="container">
         <!--<div id="dragdropoverlay" class="w-full h-full flex-1 bg-red-300 z-40">Drop files here</div>-->
         <section class="editor">
-            <div id="waveform"></div>
+            <div id="waveform">
+                <div id="waveform-load-overlay"
+                    style="display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30,30,30,0.85); color: #ffd000; font-size: 2rem; z-index: 10; cursor: pointer;">
+                    Click to load
+                    <input id="waveform-file-input" type="file" accept="audio/wav,audio/wave,audio/x-wav"
+                        style="display:none" />
+                </div>
+            </div>
         </section>
         <section class="controls">
             <section>
@@ -45,24 +52,24 @@
                     </section>
                     <hr />
                     <button id="create-crop-region" class="button">
-                        <div class="text-lg" title="Click to create a selection region for cropping audio">create crop
+                        <div title="Click to create a selection region for cropping audio">create crop
                             region</div>
                     </button>
                     <button id="crop-audio" class="button" disabled>
-                        <div class="text-lg title=" Trim audio to selected region">crop to selection</div>
+                        <div title=" Trim audio to selected region">crop to selection</div>
                     </button>
                     <button id="clear-crop-region" class="button" disabled>
                         <div class="text-xs">clear crop region</div>
                     </button>
                     <hr />
                     <button id="create-fade-in-region" class="button">
-                        <div class="text-lg">create fade-in</div>
+                        <div>create fade-in</div>
                     </button>
                     <button id="create-fade-out-region" class="button">
-                        <div class="text-lg">create fade-out</div>
+                        <div>create fade-out</div>
                     </button>
                     <button id="apply-fades" class="button" disabled>
-                        <div class="text-lg" title="Process fade effects">apply fades</div>
+                        <div title="Process fade effects">apply fades</div>
                     </button>
                     <button id="clear-fade-regions" class="button" disabled>
                         <div class="text-xs">clear fade regions</div>
@@ -76,7 +83,7 @@
             </label>
             <section>
                 <h3>usage</h3>
-                <p>1. drag one or more audiofiles onto the page</p>
+                <p>1. click wave area or drag one or more audiofiles onto the page</p>
                 <p>2a. add markers using the shortcut listed below or automatically by clicking the "detect onsets"
                     button which will analyze your audio</p>
                 <p>2b. or add automatically by clicking the "slice into equal chunks" button</p>

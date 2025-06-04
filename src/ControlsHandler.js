@@ -20,6 +20,9 @@ export default class ControlsHandler {
     );
     this.applyFadesButton = document.getElementById("apply-fades");
     this.clearFadeRegionsButton = document.getElementById("clear-fade-regions");
+    this.waveform = document.getElementById("waveform");
+    this.waveformLoadOverlay = document.getElementById("waveform-load-overlay");
+    this.waveformFileInput = document.getElementById("waveform-file-input");
 
     // Crop region state
     this.cropRegion = null;
@@ -90,6 +93,35 @@ export default class ControlsHandler {
     // Initial states
     this.updateDivideButton();
     this.validateSliceCount();
+
+    // Overlay click opens file dialog
+    this.waveformLoadOverlay.addEventListener("click", () => {
+      this.waveformFileInput.click();
+    });
+    // File input loads file
+    this.waveformFileInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        this.morphaweb.dropHandler.overlayHide();
+        this.morphaweb.dropHandler.loadFiles(e.target.files).then((res) => {
+          this.morphaweb.wavesurfer.loadBlob(res.blob);
+          this.morphaweb.wavHandler.markers = res.markers;
+        });
+      }
+    });
+    // Show/hide overlay based on audio loaded
+    this.morphaweb.wavesurfer.on("ready", () => {
+      this.hideWaveformLoadOverlay();
+    });
+    this.morphaweb.wavesurfer.on("destroy", () => {
+      this.showWaveformLoadOverlay();
+    });
+    // If no audio loaded at start, show overlay
+    if (
+      !this.morphaweb.wavesurfer.backend ||
+      !this.morphaweb.wavesurfer.backend.buffer
+    ) {
+      this.showWaveformLoadOverlay();
+    }
   }
 
   setButtonsState = (disabled) => {
@@ -663,5 +695,12 @@ export default class ControlsHandler {
     const hasFadeRegions = this.fadeInRegion || this.fadeOutRegion;
     this.applyFadesButton.disabled = !hasFadeRegions;
     this.clearFadeRegionsButton.disabled = !hasFadeRegions;
+  };
+
+  showWaveformLoadOverlay = () => {
+    if (this.waveformLoadOverlay) this.waveformLoadOverlay.style.display = "flex";
+  };
+  hideWaveformLoadOverlay = () => {
+    if (this.waveformLoadOverlay) this.waveformLoadOverlay.style.display = "none";
   };
 }

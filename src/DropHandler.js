@@ -186,6 +186,12 @@ export default class DropHandler {
     });
   }
 
+  // Add a method to allow file input loading from ControlsHandler
+  loadFilesFromInput(files) {
+    this.overlayHide();
+    return this.loadFiles(files);
+  }
+
   overlayShow() {
     this.overlay.style.display = "block";
   }
