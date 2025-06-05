@@ -976,60 +976,7 @@ export default class ControlsHandler {
   };
 
   resetAudio = () => {
-    try {
-      // Check if there's audio loaded
-      if (this.morphaweb.wavesurfer.getDuration() === 0) {
-        this.showMessage("No audio loaded to reset.");
-        return;
-      }
-
-      // Stop playback if currently playing
-      if (this.morphaweb.wavesurfer.isPlaying()) {
-        this.morphaweb.wavesurfer.pause();
-      }
-
-      // Clear all markers
-      this.morphaweb.markerHandler.clearAllMarkers();
-
-      // Clear all regions (crop and fade regions)
-      this.clearCropRegion();
-      this.clearFadeRegions();
-
-      // Clear the audio buffer and destroy wavesurfer content
-      this.morphaweb.wavesurfer.empty();
-
-      // Reset zoom position
-      this.morphaweb.scrollPos = this.morphaweb.scrollMin || 0;
-
-      // Reset zoom slider
-      if (this.zoomSlider) {
-        this.zoomSlider.value = 20;
-      }
-
-      // Show the waveform load overlay again
-      this.showWaveformLoadOverlay();
-
-      // Disable all buttons (return to initial state)
-      this.setButtonsState(true);
-
-      // Update all displays to show initial state
-      this.morphaweb.updateAllDisplays();
-
-      // Reset export format to default
-      this.selectedExportFormat = "stereo-32-48000";
-      this.updateExportFormatDisplay();
-      this.updateDropdownSelection();
-      this.closeExportFormatDropdown();
-
-      // Show success message
-      this.showMessage("Audio file unloaded. Ready to load new audio.");
-
-      // Track the reset action
-      this.morphaweb.track("ResetAudio");
-    } catch (error) {
-      this.morphaweb.track("ErrorResetAudio");
-      console.error("Error resetting audio:", error);
-      this.showMessage("Error resetting audio. Please try again.");
-    }
+    // Reload the page
+    window.location.reload();
   };
 }
