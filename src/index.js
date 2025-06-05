@@ -1,5 +1,5 @@
 import Morphaweb from "./Morphaweb";
-const version = "snapshot";
+const version = "v2.0";
 
 const morphaweb = new Morphaweb();
 
