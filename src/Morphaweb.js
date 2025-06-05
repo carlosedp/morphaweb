@@ -142,7 +142,7 @@ export default class Morphaweb {
     const zoomElement = document.getElementById("zoom-level");
     if (zoomElement && this.wavesurfer) {
       const zoomLevel = this.wavesurfer.params.minPxPerSec || 20;
-      zoomElement.textContent = `Zoom: ${zoomLevel} px/sec`;
+      zoomElement.textContent = `(${zoomLevel} px/sec)`;
     }
   }
 
