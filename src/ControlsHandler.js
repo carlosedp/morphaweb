@@ -444,8 +444,7 @@ export default class ControlsHandler {
           this.applyFades();
         }
         break;
-      case "r":
-      case "R":
+      case "\\":
         if (!this.resetButton.disabled) {
           this.resetAudio();
         }
