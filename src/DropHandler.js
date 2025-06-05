@@ -28,12 +28,14 @@ export default class DropHandler {
   // Show confirmation dialog for file truncation
   showTruncationDialog(fileName, duration, maxDuration) {
     return new Promise((resolve) => {
-      const minutes = Math.round(duration / 60 * 10) / 10;
-      const maxMinutes = Math.round(maxDuration / 60 * 10) / 10;
+      const minutes = Math.round((duration / 60) * 10) / 10;
+      const maxMinutes = Math.round((maxDuration / 60) * 10) / 10;
 
       const message = `The file "${fileName}" is ${minutes} minutes long, which exceeds the recommended maximum of ${maxMinutes} minutes for Makenoise Morphagene.\n\nDo you want to:\n- Truncate to ${maxMinutes} minutes (recommended)\n- Keep the full file (may cause performance issues)`;
 
-      const result = confirm(message + "\n\nClick OK to truncate, Cancel to keep full file.");
+      const result = confirm(
+        message + "\n\nClick OK to truncate, Cancel to keep full file.",
+      );
       resolve(result);
     });
   }
@@ -132,7 +134,7 @@ export default class DropHandler {
                 const shouldTruncate = await this.showTruncationDialog(
                   file.name,
                   decodedBuf.duration,
-                  MAX_DURATION_SECONDS
+                  MAX_DURATION_SECONDS,
                 );
 
                 if (shouldTruncate) {
@@ -168,8 +170,8 @@ export default class DropHandler {
                 } else {
                   // User chose to keep full file
                   this.showMessage(
-                    `Loading full file "${file.name}" (${Math.round(decodedBuf.duration / 60 * 10) / 10} minutes). This may not work on Morphagene.`,
-                    5000
+                    `Loading full file "${file.name}" (${Math.round((decodedBuf.duration / 60) * 10) / 10} minutes). This may not work on Morphagene.`,
+                    5000,
                   );
                 }
               }

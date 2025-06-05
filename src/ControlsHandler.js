@@ -6,7 +6,9 @@ export default class ControlsHandler {
     this.zoomSlider = document.querySelector('input[type="range"]');
     this.exportButton = document.getElementById("export");
     this.resetButton = document.getElementById("reset");
-    this.exportFormatDropdown = document.getElementById("export-format-dropdown");
+    this.exportFormatDropdown = document.getElementById(
+      "export-format-dropdown",
+    );
     this.exportFormatOptions = document.getElementById("export-format-options");
     this.exportFormatDisplay = document.getElementById("export-format-display");
     this.sliceButton = document.getElementById("auto-slice");
@@ -47,7 +49,10 @@ export default class ControlsHandler {
     // Add listeners
     this.exportButton.addEventListener("click", this.exportWavFile);
     this.resetButton.addEventListener("click", this.resetAudio);
-    this.exportFormatDropdown.addEventListener("click", this.toggleExportFormatDropdown);
+    this.exportFormatDropdown.addEventListener(
+      "click",
+      this.toggleExportFormatDropdown,
+    );
     this.playButton.addEventListener("click", this.playToggle);
     this.sliceButton.addEventListener("click", this.handleAutoSlice);
     this.detectOnsetsButton.addEventListener(
@@ -212,29 +217,35 @@ export default class ControlsHandler {
       "mono-16-48000": "(mono, 16-bit, 48KHz)",
       "mono-16-44100": "(mono, 16-bit, 44.1KHz)",
       "stereo-24-48000": "(stereo, 24-bit, 48KHz)",
-      "stereo-24-44100": "(stereo, 24-bit, 44.1KHz)"
+      "stereo-24-44100": "(stereo, 24-bit, 44.1KHz)",
     };
     const currentFormat = this.selectedExportFormat || "stereo-32-48000";
-    this.exportFormatDisplay.textContent = formatMap[currentFormat] || "(stereo, 32-bit, 48KHz)";
+    this.exportFormatDisplay.textContent =
+      formatMap[currentFormat] || "(stereo, 32-bit, 48KHz)";
   };
 
   updateDropdownSelection = () => {
     // Remove previous selection
-    this.exportFormatOptions.querySelectorAll('.dropdown-item').forEach(item => {
-      item.classList.remove('selected');
-    });
+    this.exportFormatOptions
+      .querySelectorAll(".dropdown-item")
+      .forEach((item) => {
+        item.classList.remove("selected");
+      });
     // Add selection to current format
     const currentFormat = this.selectedExportFormat || "stereo-32-48000";
-    const selectedItem = this.exportFormatOptions.querySelector(`[data-format="${currentFormat}"]`);
+    const selectedItem = this.exportFormatOptions.querySelector(
+      `[data-format="${currentFormat}"]`,
+    );
     if (selectedItem) {
-      selectedItem.classList.add('selected');
+      selectedItem.classList.add("selected");
     }
   };
 
   parseExportFormat = (format) => {
-    const currentFormat = format || this.selectedExportFormat || "stereo-32-48000";
-    const parts = currentFormat.split('-');
-    const channels = parts[0] === 'mono' ? 1 : 2;
+    const currentFormat =
+      format || this.selectedExportFormat || "stereo-32-48000";
+    const parts = currentFormat.split("-");
+    const channels = parts[0] === "mono" ? 1 : 2;
     const bitDepth = parseInt(parts[1]);
     const sampleRate = parseInt(parts[2]);
     return { channels, bitDepth, sampleRate };
@@ -265,7 +276,7 @@ export default class ControlsHandler {
       this.showMessage("Processing export... Please wait.", 10000); // Longer duration
 
       // Update button text and disable controls during processing
-      const exportButtonText = this.exportButton.querySelector('.text-2xl');
+      const exportButtonText = this.exportButton.querySelector(".text-2xl");
       const originalButtonText = exportButtonText.textContent;
       exportButtonText.textContent = "exporting...";
 
@@ -273,7 +284,7 @@ export default class ControlsHandler {
       this.exportFormatDropdown.disabled = true;
 
       // Small delay to ensure UI updates are visible before processing
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const audioBuffer = this.morphaweb.wavesurfer.backend.buffer;
 
@@ -296,21 +307,24 @@ export default class ControlsHandler {
       // Get format options from selected export format
       const formatOptions = this.parseExportFormat(this.selectedExportFormat);
 
-      await this.morphaweb.wavHandler.createFileFromBuffer(buffer, markers, formatOptions);
+      await this.morphaweb.wavHandler.createFileFromBuffer(
+        buffer,
+        markers,
+        formatOptions,
+      );
 
       // Ensure processing message was visible for at least 500ms
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Show success message
       this.showMessage("Export completed successfully!", 3000);
-
     } catch (error) {
       console.log(error);
       this.morphaweb.track("ErrorExportWavFile");
       this.showMessage("Error exporting file. Please try again.");
     } finally {
       // Restore button text and re-enable controls
-      const exportButtonText = this.exportButton.querySelector('.text-2xl');
+      const exportButtonText = this.exportButton.querySelector(".text-2xl");
       exportButtonText.textContent = "export reel";
 
       this.exportButton.disabled = false;

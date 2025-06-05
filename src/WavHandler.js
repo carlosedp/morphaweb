@@ -96,11 +96,7 @@ export default class WavHandler {
 
   async createFileFromBuffer(buffer, markers, formatOptions = {}) {
     // Default format options
-    const {
-      channels = 2,
-      bitDepth = 32,
-      sampleRate = 48000
-    } = formatOptions;
+    const { channels = 2, bitDepth = 32, sampleRate = 48000 } = formatOptions;
 
     console.log("=== EXPORT FORMAT INFO ===");
     console.log("Export channels:", channels);
@@ -167,7 +163,8 @@ export default class WavHandler {
     let file = new WaveFile();
 
     // Determine bit depth format string for WaveFile
-    const bitDepthFormat = bitDepth === 16 ? "16" : bitDepth === 24 ? "24" : "32f";
+    const bitDepthFormat =
+      bitDepth === 16 ? "16" : bitDepth === 24 ? "24" : "32f";
 
     file.fromScratch(channels, sampleRate, bitDepthFormat, outputBuffer);
 
