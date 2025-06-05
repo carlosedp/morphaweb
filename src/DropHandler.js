@@ -25,6 +25,19 @@ export default class DropHandler {
     }, duration);
   }
 
+  // Show confirmation dialog for file truncation
+  showTruncationDialog(fileName, duration, maxDuration) {
+    return new Promise((resolve) => {
+      const minutes = Math.round(duration / 60 * 10) / 10;
+      const maxMinutes = Math.round(maxDuration / 60 * 10) / 10;
+
+      const message = `The file "${fileName}" is ${minutes} minutes long, which exceeds the recommended maximum of ${maxMinutes} minutes for Makenoise Morphagene.\n\nDo you want to:\n- Truncate to ${maxMinutes} minutes (recommended)\n- Keep the full file (may cause performance issues)`;
+
+      const result = confirm(message + "\n\nClick OK to truncate, Cancel to keep full file.");
+      resolve(result);
+    });
+  }
+
   // Function to read the original sample rate from WAV file header
   getOriginalSampleRate(arrayBuffer) {
     try {
@@ -115,34 +128,50 @@ export default class DropHandler {
               console.log("========================");
 
               if (decodedBuf.duration > MAX_DURATION_SECONDS) {
-                const truncatedBuffer = audioCtx.createBuffer(
-                  decodedBuf.numberOfChannels,
-                  Math.floor(MAX_DURATION_SECONDS * decodedBuf.sampleRate),
-                  decodedBuf.sampleRate,
+                // Ask user whether to truncate or keep full file
+                const shouldTruncate = await this.showTruncationDialog(
+                  file.name,
+                  decodedBuf.duration,
+                  MAX_DURATION_SECONDS
                 );
 
-                for (
-                  let channel = 0;
-                  channel < decodedBuf.numberOfChannels;
-                  channel++
-                ) {
-                  truncatedBuffer.copyToChannel(
-                    decodedBuf
-                      .getChannelData(channel)
-                      .slice(
-                        0,
-                        Math.floor(
-                          MAX_DURATION_SECONDS * decodedBuf.sampleRate,
+                if (shouldTruncate) {
+                  // User chose to truncate
+                  const truncatedBuffer = audioCtx.createBuffer(
+                    decodedBuf.numberOfChannels,
+                    Math.floor(MAX_DURATION_SECONDS * decodedBuf.sampleRate),
+                    decodedBuf.sampleRate,
+                  );
+
+                  for (
+                    let channel = 0;
+                    channel < decodedBuf.numberOfChannels;
+                    channel++
+                  ) {
+                    truncatedBuffer.copyToChannel(
+                      decodedBuf
+                        .getChannelData(channel)
+                        .slice(
+                          0,
+                          Math.floor(
+                            MAX_DURATION_SECONDS * decodedBuf.sampleRate,
+                          ),
                         ),
-                      ),
-                    channel,
+                      channel,
+                    );
+                  }
+
+                  this.showMessage(
+                    `Audio file "${file.name}" has been truncated to ${MAX_DURATION_SECONDS / 60} minutes.`,
+                  );
+                  decodedBuf = truncatedBuffer;
+                } else {
+                  // User chose to keep full file
+                  this.showMessage(
+                    `Loading full file "${file.name}" (${Math.round(decodedBuf.duration / 60 * 10) / 10} minutes). This may not work on Morphagene.`,
+                    5000
                   );
                 }
-
-                this.showMessage(
-                  `Audio file longer than ${MAX_DURATION_SECONDS / 60} minutes. It has been truncated.`,
-                );
-                decodedBuf = truncatedBuffer;
               }
 
               let m = await this.morphaweb.wavHandler.getMarkersFromFile(file);

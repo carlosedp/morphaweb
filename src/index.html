@@ -36,9 +36,29 @@
                     <button id="play">⏸ play/pause</button>
                     <!-- <button id="pause">pause</button>
                     <hr /> -->
-                    <button id="export" class="button">
-                        <div class="text-2xl">export reel</div>
-                        <div class="text-xs">(stereo, 32-bit, 48KHz)</div>
+                    <div class="export-controls">
+                        <button id="export" class="button">
+                            <div class="text-2xl">export reel</div>
+                            <div class="text-xs" id="export-format-display">(stereo, 32-bit, 48KHz)</div>
+                        </button>
+                        <div class="dropdown">
+                            <button id="export-format-dropdown" class="dropdown-button" title="Select export format">
+                                ⚙️
+                            </button>
+                            <div class="dropdown-content" id="export-format-options">
+                                <div class="dropdown-item" data-format="stereo-32-48000">Stereo, 32-bit, 48KHz (default)
+                                </div>
+                                <div class="dropdown-item" data-format="stereo-16-48000">Stereo, 16-bit, 48KHz</div>
+                                <div class="dropdown-item" data-format="stereo-16-44100">Stereo, 16-bit, 44.1KHz</div>
+                                <div class="dropdown-item" data-format="mono-16-48000">Mono, 16-bit, 48KHz</div>
+                                <div class="dropdown-item" data-format="mono-16-44100">Mono, 16-bit, 44.1KHz</div>
+                                <div class="dropdown-item" data-format="stereo-24-48000">Stereo, 24-bit, 48KHz</div>
+                                <div class="dropdown-item" data-format="stereo-24-44100">Stereo, 24-bit, 44.1KHz</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="reset" class="button">
+                        <div title="Unload current audio file and reset to initial state">🔄 reset</div>
                     </button>
                     <hr />
                     <section>
@@ -160,6 +180,12 @@
                         <div>a</div>
                     </div>
                     <div>apply fades</div>
+                </section>
+                <section class="shortcut">
+                    <div class="shortcut-icon">
+                        <div>r</div>
+                    </div>
+                    <div>reset / unload audio</div>
                 </section>
             </section>
         </section>

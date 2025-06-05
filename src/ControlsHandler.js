@@ -5,6 +5,10 @@ export default class ControlsHandler {
     this.playButton = document.getElementById("play");
     this.zoomSlider = document.querySelector('input[type="range"]');
     this.exportButton = document.getElementById("export");
+    this.resetButton = document.getElementById("reset");
+    this.exportFormatDropdown = document.getElementById("export-format-dropdown");
+    this.exportFormatOptions = document.getElementById("export-format-options");
+    this.exportFormatDisplay = document.getElementById("export-format-display");
     this.sliceButton = document.getElementById("auto-slice");
     this.sliceCountInput = document.getElementById("slice-count");
     this.detectOnsetsButton = document.getElementById("detect-onsets");
@@ -31,11 +35,19 @@ export default class ControlsHandler {
     this.fadeInRegion = null;
     this.fadeOutRegion = null;
 
+    // Export format state
+    this.selectedExportFormat = "stereo-32-48000"; // Default format
+
+    // Message timeout for controlling message display duration
+    this.messageTimeout = null;
+
     // Initial state - disable buttons
     this.setButtonsState(true);
 
     // Add listeners
     this.exportButton.addEventListener("click", this.exportWavFile);
+    this.resetButton.addEventListener("click", this.resetAudio);
+    this.exportFormatDropdown.addEventListener("click", this.toggleExportFormatDropdown);
     this.playButton.addEventListener("click", this.playToggle);
     this.sliceButton.addEventListener("click", this.handleAutoSlice);
     this.detectOnsetsButton.addEventListener(
@@ -68,6 +80,20 @@ export default class ControlsHandler {
       this.morphaweb.wavesurfer.zoom(minPxPerSec);
       // Update zoom display
       this.morphaweb.updateZoomDisplay();
+    });
+
+    // Export format dropdown event listeners
+    this.exportFormatOptions.addEventListener("click", (e) => {
+      if (e.target.classList.contains("dropdown-item")) {
+        this.selectExportFormat(e.target.dataset.format);
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".dropdown")) {
+        this.closeExportFormatDropdown();
+      }
     });
 
     document.addEventListener("keydown", this.onKeydown.bind(this));
@@ -128,6 +154,10 @@ export default class ControlsHandler {
     ) {
       this.showWaveformLoadOverlay();
     }
+
+    // Initialize export format display and dropdown
+    this.updateExportFormatDisplay();
+    this.updateDropdownSelection();
   }
 
   setButtonsState = (disabled) => {
@@ -139,7 +169,75 @@ export default class ControlsHandler {
     this.createCropRegionButton.disabled = disabled;
     this.createFadeInRegionButton.disabled = disabled;
     this.createFadeOutRegionButton.disabled = disabled;
+    // Reset button should be enabled when audio is loaded, disabled when not
+    this.resetButton.disabled = disabled;
+    // Export format dropdown should follow the same state
+    this.exportFormatDropdown.disabled = disabled;
     // Don't enable crop, fade apply, and clear buttons here as they have their own logic
+  };
+
+  // Export format dropdown methods
+  toggleExportFormatDropdown = (e) => {
+    e.stopPropagation();
+    const isOpen = this.exportFormatOptions.style.display === "block";
+    if (isOpen) {
+      this.closeExportFormatDropdown();
+    } else {
+      this.openExportFormatDropdown();
+    }
+  };
+
+  openExportFormatDropdown = () => {
+    this.exportFormatOptions.style.display = "block";
+    // Update selection indicator
+    this.updateDropdownSelection();
+  };
+
+  closeExportFormatDropdown = () => {
+    this.exportFormatOptions.style.display = "none";
+  };
+
+  selectExportFormat = (format) => {
+    this.selectedExportFormat = format;
+    this.updateExportFormatDisplay();
+    this.updateDropdownSelection();
+    this.closeExportFormatDropdown();
+  };
+
+  updateExportFormatDisplay = () => {
+    const formatMap = {
+      "stereo-32-48000": "(stereo, 32-bit, 48KHz)",
+      "stereo-16-48000": "(stereo, 16-bit, 48KHz)",
+      "stereo-16-44100": "(stereo, 16-bit, 44.1KHz)",
+      "mono-16-48000": "(mono, 16-bit, 48KHz)",
+      "mono-16-44100": "(mono, 16-bit, 44.1KHz)",
+      "stereo-24-48000": "(stereo, 24-bit, 48KHz)",
+      "stereo-24-44100": "(stereo, 24-bit, 44.1KHz)"
+    };
+    const currentFormat = this.selectedExportFormat || "stereo-32-48000";
+    this.exportFormatDisplay.textContent = formatMap[currentFormat] || "(stereo, 32-bit, 48KHz)";
+  };
+
+  updateDropdownSelection = () => {
+    // Remove previous selection
+    this.exportFormatOptions.querySelectorAll('.dropdown-item').forEach(item => {
+      item.classList.remove('selected');
+    });
+    // Add selection to current format
+    const currentFormat = this.selectedExportFormat || "stereo-32-48000";
+    const selectedItem = this.exportFormatOptions.querySelector(`[data-format="${currentFormat}"]`);
+    if (selectedItem) {
+      selectedItem.classList.add('selected');
+    }
+  };
+
+  parseExportFormat = (format) => {
+    const currentFormat = format || this.selectedExportFormat || "stereo-32-48000";
+    const parts = currentFormat.split('-');
+    const channels = parts[0] === 'mono' ? 1 : 2;
+    const bitDepth = parseInt(parts[1]);
+    const sampleRate = parseInt(parts[2]);
+    return { channels, bitDepth, sampleRate };
   };
 
   validateSliceCount = () => {
@@ -157,11 +255,25 @@ export default class ControlsHandler {
       this.morphaweb.wavesurfer.getDuration() === 0;
   };
 
-  exportWavFile = () => {
+  exportWavFile = async () => {
     try {
       if (this.morphaweb.wavesurfer.getDuration() === 0) {
         return false;
       }
+
+      // Show processing message and update UI immediately
+      this.showMessage("Processing export... Please wait.", 10000); // Longer duration
+
+      // Update button text and disable controls during processing
+      const exportButtonText = this.exportButton.querySelector('.text-2xl');
+      const originalButtonText = exportButtonText.textContent;
+      exportButtonText.textContent = "exporting...";
+
+      this.exportButton.disabled = true;
+      this.exportFormatDropdown.disabled = true;
+
+      // Small delay to ensure UI updates are visible before processing
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const audioBuffer = this.morphaweb.wavesurfer.backend.buffer;
 
@@ -180,10 +292,29 @@ export default class ControlsHandler {
       }
 
       const markers = this.morphaweb.wavesurfer.markers.markers;
-      this.morphaweb.wavHandler.createFileFromBuffer(buffer, markers);
+
+      // Get format options from selected export format
+      const formatOptions = this.parseExportFormat(this.selectedExportFormat);
+
+      await this.morphaweb.wavHandler.createFileFromBuffer(buffer, markers, formatOptions);
+
+      // Ensure processing message was visible for at least 500ms
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Show success message
+      this.showMessage("Export completed successfully!", 3000);
+
     } catch (error) {
       console.log(error);
       this.morphaweb.track("ErrorExportWavFile");
+      this.showMessage("Error exporting file. Please try again.");
+    } finally {
+      // Restore button text and re-enable controls
+      const exportButtonText = this.exportButton.querySelector('.text-2xl');
+      exportButtonText.textContent = "export reel";
+
+      this.exportButton.disabled = false;
+      this.exportFormatDropdown.disabled = false;
     }
   };
 
@@ -297,6 +428,12 @@ export default class ControlsHandler {
       case "A":
         if (!this.applyFadesButton.disabled) {
           this.applyFades();
+        }
+        break;
+      case "r":
+      case "R":
+        if (!this.resetButton.disabled) {
+          this.resetAudio();
         }
         break;
     }
@@ -578,17 +715,22 @@ export default class ControlsHandler {
     return `${mins}:${secs.padStart(5, "0")}`;
   };
 
-  showMessage = (text) => {
+  showMessage = (text, duration = 3000) => {
     const messageOverlay = document.getElementById("message-overlay");
     const messageText = document.getElementById("message-text");
 
     messageText.textContent = text;
     messageOverlay.style.display = "block";
 
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
+    // Clear any existing timeout
+    if (this.messageTimeout) {
+      clearTimeout(this.messageTimeout);
+    }
+
+    // Auto-hide after specified duration
+    this.messageTimeout = setTimeout(() => {
       messageOverlay.style.display = "none";
-    }, 3000);
+    }, duration);
   };
 
   interleaveChannels = (audioBuffer) => {
@@ -831,5 +973,63 @@ export default class ControlsHandler {
   hideWaveformLoadOverlay = () => {
     if (this.waveformLoadOverlay)
       this.waveformLoadOverlay.style.display = "none";
+  };
+
+  resetAudio = () => {
+    try {
+      // Check if there's audio loaded
+      if (this.morphaweb.wavesurfer.getDuration() === 0) {
+        this.showMessage("No audio loaded to reset.");
+        return;
+      }
+
+      // Stop playback if currently playing
+      if (this.morphaweb.wavesurfer.isPlaying()) {
+        this.morphaweb.wavesurfer.pause();
+      }
+
+      // Clear all markers
+      this.morphaweb.markerHandler.clearAllMarkers();
+
+      // Clear all regions (crop and fade regions)
+      this.clearCropRegion();
+      this.clearFadeRegions();
+
+      // Clear the audio buffer and destroy wavesurfer content
+      this.morphaweb.wavesurfer.empty();
+
+      // Reset zoom position
+      this.morphaweb.scrollPos = this.morphaweb.scrollMin || 0;
+
+      // Reset zoom slider
+      if (this.zoomSlider) {
+        this.zoomSlider.value = 20;
+      }
+
+      // Show the waveform load overlay again
+      this.showWaveformLoadOverlay();
+
+      // Disable all buttons (return to initial state)
+      this.setButtonsState(true);
+
+      // Update all displays to show initial state
+      this.morphaweb.updateAllDisplays();
+
+      // Reset export format to default
+      this.selectedExportFormat = "stereo-32-48000";
+      this.updateExportFormatDisplay();
+      this.updateDropdownSelection();
+      this.closeExportFormatDropdown();
+
+      // Show success message
+      this.showMessage("Audio file unloaded. Ready to load new audio.");
+
+      // Track the reset action
+      this.morphaweb.track("ResetAudio");
+    } catch (error) {
+      this.morphaweb.track("ErrorResetAudio");
+      console.error("Error resetting audio:", error);
+      this.showMessage("Error resetting audio. Please try again.");
+    }
   };
 }

@@ -94,14 +94,27 @@ export default class WavHandler {
     });
   }
 
-  async createFileFromBuffer(buffer, markers) {
+  async createFileFromBuffer(buffer, markers, formatOptions = {}) {
+    // Default format options
+    const {
+      channels = 2,
+      bitDepth = 32,
+      sampleRate = 48000
+    } = formatOptions;
+
+    console.log("=== EXPORT FORMAT INFO ===");
+    console.log("Export channels:", channels);
+    console.log("Export bit depth:", bitDepth);
+    console.log("Export sample rate:", sampleRate);
+    console.log("==========================");
+
     const originalRate = this.originalSampleRate || 44100;
 
     console.log("=== EXPORT DEBUG INFO ===");
     console.log("Input buffer channels:", buffer.length);
     console.log("Input buffer length:", buffer[0].length);
     console.log("Original sample rate:", originalRate);
-    console.log("Target sample rate:", this.targetSampleRate);
+    console.log("Target sample rate:", sampleRate);
     console.log(
       "Original duration:",
       buffer[0].length / originalRate,
@@ -109,24 +122,40 @@ export default class WavHandler {
     );
 
     // Check if resampling is needed
-    const needsResampling = originalRate !== this.targetSampleRate;
+    const needsResampling = originalRate !== sampleRate;
     console.log("Needs resampling:", needsResampling);
     console.log("========================");
 
     // Only resample if sample rates are different
     const finalBuffer = needsResampling
-      ? this.resampleBuffer(buffer, originalRate, this.targetSampleRate)
+      ? this.resampleBuffer(buffer, originalRate, sampleRate)
       : buffer;
+
+    // Handle channel configuration
+    let outputBuffer = finalBuffer;
+    if (channels === 1 && finalBuffer.length === 2) {
+      // Convert stereo to mono by averaging the channels
+      const monoBuffer = new Float32Array(finalBuffer[0].length);
+      for (let i = 0; i < finalBuffer[0].length; i++) {
+        monoBuffer[i] = (finalBuffer[0][i] + finalBuffer[1][i]) / 2;
+      }
+      outputBuffer = [monoBuffer];
+      console.log("Converted stereo to mono");
+    } else if (channels === 2 && finalBuffer.length === 1) {
+      // Convert mono to stereo by duplicating the channel
+      outputBuffer = [finalBuffer[0], finalBuffer[0]];
+      console.log("Converted mono to stereo");
+    }
 
     if (needsResampling) {
       console.log("=== RESAMPLE DEBUG INFO ===");
       console.log("Resampled buffer length:", finalBuffer[0].length);
       console.log(
         "Expected resampled duration:",
-        finalBuffer[0].length / this.targetSampleRate,
+        finalBuffer[0].length / sampleRate,
         "seconds",
       );
-      console.log("Sample rate ratio:", this.targetSampleRate / originalRate);
+      console.log("Sample rate ratio:", sampleRate / originalRate);
       console.log("============================");
     } else {
       console.log("=== NO RESAMPLING NEEDED ===");
@@ -136,7 +165,11 @@ export default class WavHandler {
 
     console.log("Exporting audio...");
     let file = new WaveFile();
-    file.fromScratch(2, this.targetSampleRate, "32f", finalBuffer);
+
+    // Determine bit depth format string for WaveFile
+    const bitDepthFormat = bitDepth === 16 ? "16" : bitDepth === 24 ? "24" : "32f";
+
+    file.fromScratch(channels, sampleRate, bitDepthFormat, outputBuffer);
 
     // Add markers as cue points (no sample rate adjustment needed - time stays the same)
     for (let marker of markers) {
