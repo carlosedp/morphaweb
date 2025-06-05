@@ -10,7 +10,8 @@
     "deploy": "yarn build && gh-pages -d dist",
     "generateVersion": "git describe --tags > assets/VERSION.txt",
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\"",
-    "promote": "git checkout production && git rebase main && git push origin production && git checkout main"
+    "promote": "git checkout production && git rebase main && git push origin production && git checkout main",
+    "release": "./scripts/release.sh"
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "targets": {
