@@ -3,6 +3,8 @@
 The goal of this project is to provide an easy solution to assembling reels for
 the Make Noise Morphagene module.
 
+## There's a newer and faster version of this tool that has been rewritten from scratch at: https://audioedit.carlosedp.com/
+
 ![Example of using Morphaweb](docs/example.gif)
 
 This version adds on top of the original Morphaweb project by Eric Gao the ability to crop and add fade-ins and fade-outs to the audio files.
