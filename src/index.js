@@ -5,3 +5,5 @@ const morphaweb = new Morphaweb();
 
 const versionElement = document.getElementById("version");
 versionElement.textContent = version;
+
+const x = 1
